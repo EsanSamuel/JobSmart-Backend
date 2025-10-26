@@ -4,6 +4,7 @@ import prisma from "../config/prisma";
 import logger from "../utils/logger";
 import { getPresignedUrl } from "../libs/aws";
 import { CVParser } from "../libs/pdf-parser";
+import { getEmbedding } from "../ai/gemini";
 
 const userRepository = new Repository<User>(prisma?.user);
 const resumeRepository = new Repository<Resume>(prisma?.resume);
@@ -76,9 +77,13 @@ export class UserService {
       const url = await getPresignedUrl(file);
       const parsedText = await CVParser(url as string);
 
+      const embedContent: number[] | undefined | any =
+        (await getEmbedding(`${parsedText}`)) || undefined;
+
       const data = {
         fileUrl: url as string,
         parsedText,
+        embedding: embedContent,
         user: {
           connect: {
             authId: authId,

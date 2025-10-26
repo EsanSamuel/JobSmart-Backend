@@ -50,6 +50,7 @@ model Job {
   jobType     JobType  @default(FULL_TIME)
   salaryRange String?
   isArchived  Boolean  @default(false)
+  embedding   Float[]
   createdById String   @db.ObjectId
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -79,6 +80,7 @@ model Resume {
   matchedSkills   String[]
   missingSkills   String[]
   summary         String?
+  embedding       Float[]
   createdAt       DateTime @default(now())
   Match           Match[]
   Job             Job?     @relation(fields: [jobId], references: [id])

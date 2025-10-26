@@ -23,5 +23,6 @@ jobRouter.post(
 jobRouter.get("/:id", JobController.getJob);
 jobRouter.patch("/:id", JobController.updateJob);
 jobRouter.get("/resume/:id", JobController.getSubmittedResume);
+jobRouter.get("/ai-recommedation/:id", JobController.getAIrecoomendation);
 
 export default jobRouter;

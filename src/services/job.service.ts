@@ -12,9 +12,12 @@ import {
 } from "../queue/matchresume.queue";
 import { QueueEvents } from "bullmq";
 import { bullRedis } from "../config/bullmq-redis";
+import { cosineSimilarity } from "../utils/cosineSimilarity";
 
 const jobRepository = new Repository<Job>(prisma?.job);
-const userRepository = new Repository<User>(prisma?.user);
+const userRepository = new Repository<
+  User & { Resume: Resume[] } & { embedding: { values: number[] } }
+>(prisma?.user);
 const resumeRepository = new Repository<Resume & { user: User }[]>(
   prisma?.resume
 );
@@ -163,6 +166,52 @@ export class JobService {
         BestFits,
         UnlikelyFits,
       };
+    } catch (error) {
+      logger.info("Error creating job" + error);
+    }
+  }
+
+  async AIjobRecommendation(userId: string) {
+    try {
+      const user = await userRepository.findById(userId, "user");
+      const jobs = await jobRepository.findAll(undefined, "job");
+
+      if (!user?.Resume || user?.Resume?.length === 0) {
+        logger.error("User Resumes hasn't been uploaded");
+        return;
+      }
+      const userResume = user?.Resume.filter(
+        (resume) => resume.embedding !== null
+      );
+      const resumeEmbedding = userResume?.[0]?.embedding ?? [0];
+
+      const rankedJobs = jobs
+        .filter(
+          (job) => Array.isArray(job.embedding) && job.embedding.length > 0
+        )
+        .map((job) => {
+          const score = cosineSimilarity(
+            resumeEmbedding,
+            job.embedding as number[]
+          );
+          return { ...job, matchScore: Math.round(score * 100) };
+        })
+        .sort((a, b) => b.matchScore - a.matchScore)
+        .slice(0, 10);
+
+      const filterJobs = rankedJobs.filter((job) => job.matchScore >= 70);
+
+      logger.info(
+        `Top recommendations for ${userId}: ${filterJobs.length} found`
+      );
+
+      filterJobs.forEach((job, index) => {
+        logger.info(
+          `${index + 1}. ${job.title} at ${job.company} - ${job.matchScore}%`
+        );
+      });
+
+      return filterJobs;
     } catch (error) {
       logger.info("Error creating job" + error);
     }

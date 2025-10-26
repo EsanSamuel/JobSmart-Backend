@@ -5,6 +5,7 @@ import { UserService } from "../services/user.service";
 import logger from "../utils/logger";
 import { JobService } from "../services/job.service";
 import { isRecruiter } from "../middleware/authorizeRole";
+import { getEmbedding } from "../ai/gemini";
 
 const jobService = new JobService();
 
@@ -22,7 +23,10 @@ class JobController {
         authId,
       } = req.body;
 
-      await isRecruiter(authId as string);
+      //await isRecruiter(authId as string);
+      const embedContent: number[] | undefined | any =
+        (await getEmbedding(`${title} ${description} ${skills.join(" ")}`)) ||
+        undefined;
 
       const data = {
         title,
@@ -32,6 +36,7 @@ class JobController {
         location,
         jobType,
         salaryRange,
+        embedding: embedContent,
         createdBy: {
           connect: {
             authId,
@@ -196,6 +201,29 @@ class JobController {
               resume
             )
           );
+      } else {
+        res.status(500).json(new ApiError(500, "Something went wrong!,", []));
+      }
+    } catch (error) {
+      res
+        .status(500)
+        .json(new ApiError(500, "Something went wrong!,", [error]));
+    }
+  }
+
+  static async getAIrecoomendation(
+    req: express.Request,
+    res: express.Response
+  ) {
+    const userId = req.params.id;
+
+    try {
+      const jobs = await jobService.AIjobRecommendation(userId);
+
+      if (jobs) {
+        res
+          .status(200)
+          .json(new ApiSuccess(200, "AI Jobs recommendation", jobs));
       } else {
         res.status(500).json(new ApiError(500, "Something went wrong!,", []));
       }

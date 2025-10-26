@@ -10,7 +10,7 @@ import logger from "./utils/logger";
 import corsOptions from "./utils/cors";
 import user from "./routes/v1/user.route";
 import jobs from "./routes/v1/job.route";
-import { AnalyzeMatch } from "./ai/gemini";
+import { AnalyzeMatch, getEmbedding } from "./ai/gemini";
 import match from "./routes/v1/match.route";
 import "./workers/match-job.worker";
 import "./workers/submittedResume.worker";
@@ -38,6 +38,7 @@ app.use("/api/v1/match", match);
 
 const startServer = () => {
   //AnalyzeMatch();
+  //getEmbedding("What is Typescript");
   server.listen(PORT, () => logger.info(`Server is running at PORT ${PORT}`));
 };
 
