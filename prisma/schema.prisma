@@ -28,11 +28,12 @@ model User {
   bio            String?
   profileImage   String?
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
   Job       Job[]
   Resume    Resume[]
   Match     Match[]
+  Bookmark  Bookmark[]
 }
 
 enum Role {
@@ -55,9 +56,10 @@ model Job {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  createdBy User     @relation(fields: [createdById], references: [id])
+  createdBy User       @relation(fields: [createdById], references: [id])
   Match     Match[]
   Resume    Resume[]
+  Bookmark  Bookmark[]
 }
 
 enum JobType {
@@ -100,4 +102,15 @@ model Match {
   job    Job?    @relation(fields: [jobId], references: [id])
   resume Resume? @relation(fields: [resumeId], references: [id])
   user   User?   @relation(fields: [userId], references: [id])
+}
+
+model Bookmark {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  jobId     String   @db.ObjectId
+  userId    String   @db.ObjectId
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  job  Job?  @relation(fields: [jobId], references: [id])
+  user User? @relation(fields: [userId], references: [id])
 }

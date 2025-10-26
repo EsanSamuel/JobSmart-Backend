@@ -21,5 +21,7 @@ userRouter.post(
   ]),
   UserController.uploadResume
 );
+userRouter.get("/:id", UserController.getUser);
+userRouter.patch("/:id", UserController.updateUser);
 
 export default userRouter;

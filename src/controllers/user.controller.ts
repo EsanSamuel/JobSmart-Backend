@@ -43,6 +43,24 @@ class UserController {
     }
   }
 
+  static async getUser(req: express.Request, res: express.Response) {
+    const userId = req.params.id;
+    try {
+      const user = await userService.getUser(userId);
+      if (user) {
+        res
+          .status(200)
+          .json(new ApiSuccess(200, "User fetched successfully", user));
+      } else {
+        res.status(500).json(new ApiError(500, "Something went wrong!,", []));
+      }
+    } catch (error) {
+      res
+        .status(500)
+        .json(new ApiError(500, "Something went wrong!,", [error]));
+    }
+  }
+
   static async getUsers(req: express.Request, res: express.Response) {
     const params = req.query;
     const { filter, skip, take, orderBy } = params;
@@ -85,6 +103,27 @@ class UserController {
           .json(
             new ApiSuccess(200, "Companies fetched successfully", companies)
           );
+      } else {
+        res.status(500).json(new ApiError(500, "Something went wrong!,", []));
+      }
+    } catch (error) {
+      res
+        .status(500)
+        .json(new ApiError(500, "Something went wrong!,", [error]));
+    }
+  }
+
+  static async updateUser(req: express.Request, res: express.Response) {
+    try {
+      const authId = req.params.id;
+      const { skills } = req.body;
+
+      const user = await userService.updateProfile(authId, skills);
+      logger.info(user);
+      if (user) {
+        res
+          .status(201)
+          .json(new ApiSuccess(201, "User created successfully", user));
       } else {
         res.status(500).json(new ApiError(500, "Something went wrong!,", []));
       }

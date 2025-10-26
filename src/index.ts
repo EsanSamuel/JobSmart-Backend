@@ -10,6 +10,7 @@ import logger from "./utils/logger";
 import corsOptions from "./utils/cors";
 import user from "./routes/v1/user.route";
 import jobs from "./routes/v1/job.route";
+import bookmarks from "./routes/v1/bookmark.route";
 import { AnalyzeMatch, getEmbedding } from "./ai/gemini";
 import match from "./routes/v1/match.route";
 import "./workers/match-job.worker";
@@ -35,6 +36,8 @@ app.use("/api/v1/users", user);
 app.use("/api/v1/jobs", jobs);
 
 app.use("/api/v1/match", match);
+
+app.use("/api/v1/bookmarks", bookmarks);
 
 const startServer = () => {
   //AnalyzeMatch();

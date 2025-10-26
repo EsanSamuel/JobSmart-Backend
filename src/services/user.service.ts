@@ -6,7 +6,9 @@ import { getPresignedUrl } from "../libs/aws";
 import { CVParser } from "../libs/pdf-parser";
 import { getEmbedding } from "../ai/gemini";
 
-const userRepository = new Repository<User>(prisma?.user);
+const userRepository = new Repository<User & { Resume: Resume[] }>(
+  prisma?.user
+);
 const resumeRepository = new Repository<Resume>(prisma?.resume);
 
 export class UserService {
@@ -21,6 +23,17 @@ export class UserService {
       }
     } catch (error) {
       logger.info("Error creating user" + error);
+    }
+  }
+
+  async getUser(userId: string) {
+    try {
+      const user = await userRepository.findById(userId, "user");
+      if (user) {
+        return user as User;
+      }
+    } catch (error) {
+      logger.info("Error fetching user" + error);
     }
   }
 
@@ -62,6 +75,38 @@ export class UserService {
     }
   }
 
+  async updateProfile(userId: string, skills: string[]) {
+    try {
+      const user = await userRepository.findById(userId, "user");
+      const parsedText = user?.Resume?.[0]?.parsedText;
+
+      const embedContent: number[] | undefined | any =
+        (await getEmbedding(`${parsedText} ${skills}`)) || undefined;
+
+      const data: any = {
+        skills,
+      } satisfies Prisma.UserUpdateInput;
+
+      const profile = await userRepository.update(user?.id as string, data);
+      logger.info(profile);
+      if (profile) {
+        const data = {
+          embedding: embedContent,
+        } satisfies Prisma.ResumeUpdateInput;
+        const updateResumeEmbedding = await resumeRepository.update(
+          user?.Resume?.[0]?.id as string,
+          data
+        );
+        console.log(updateResumeEmbedding);
+        return profile as User;
+      } else {
+        logger.info("Error updating user profile");
+      }
+    } catch (error) {
+      logger.info("Error updating user profile" + error);
+    }
+  }
+
   async uploadResume(authId: string, file: Express.Multer.File) {
     try {
       const hasUserUploaded = await resumeRepository.findFirst(
@@ -76,9 +121,11 @@ export class UserService {
 
       const url = await getPresignedUrl(file);
       const parsedText = await CVParser(url as string);
+      const user = await userRepository.findById(authId, "user");
+      const userSkills = user?.skills;
 
       const embedContent: number[] | undefined | any =
-        (await getEmbedding(`${parsedText}`)) || undefined;
+        (await getEmbedding(`${parsedText} ${userSkills}`)) || undefined;
 
       const data = {
         fileUrl: url as string,

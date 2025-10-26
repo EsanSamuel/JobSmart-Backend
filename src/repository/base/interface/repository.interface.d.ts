@@ -9,7 +9,9 @@ export interface IRepository<T> {
       | "matched"
       | "submittedResume"
       | "archivedJobs"
-      | "AllJobs",
+      | "AllJobs"
+      | "recruiterJob"
+      | "bookmark",
     params?: {
       filter?: any;
       skip?: any;
@@ -17,7 +19,10 @@ export interface IRepository<T> {
       orderBy?: "asc" | "desc";
     }
   ): Promise<T[]>;
-  findById(id?: string, type?: "accountRole" | "user"): Promise<T | null>;
+  findById(
+    id?: string,
+    type?: "accountRole" | "user" | "bookmark"
+  ): Promise<T | null>;
   findFirst(id1?: string, id2?: string, type?: "resume"): Promise<Boolean>;
   update(id: string, data: Partial<T>, type?: string): Promise<T | null>;
   delete(id: string, type?: string): Promise<Boolean>;
