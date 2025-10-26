@@ -21,6 +21,7 @@ jobRouter.post(
   JobController.submitResume
 );
 jobRouter.get("/:id", JobController.getJob);
+jobRouter.patch("/:id", JobController.updateJob);
 jobRouter.get("/resume/:id", JobController.getSubmittedResume);
 
 export default jobRouter;

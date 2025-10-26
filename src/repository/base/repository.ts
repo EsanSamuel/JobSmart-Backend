@@ -2,6 +2,7 @@ import { PrismaClient } from "@prisma/client";
 import { IRepository } from "./interface/repository.interface";
 import prisma from "../../config/prisma";
 import { Prisma } from "../../generated/prisma/client";
+import logger from "../../utils/logger";
 
 export class Repository<T> implements IRepository<T> {
   private readonly db: any;
@@ -18,7 +19,14 @@ export class Repository<T> implements IRepository<T> {
 
   async findAll(
     id?: string,
-    type?: "user" | "job" | "resume" | "matched" | "submittedResume",
+    type?:
+      | "user"
+      | "job"
+      | "resume"
+      | "matched"
+      | "submittedResume"
+      | "archivedJobs"
+      | "AllJobs",
     params?: {
       filter?: any;
       skip?: any;
@@ -62,9 +70,54 @@ export class Repository<T> implements IRepository<T> {
             Match: true,
             Resume: true,
           },
+          orderBy: {
+            createdAt: params?.orderBy ?? "desc",
+          } satisfies Prisma.UserOrderByWithRelationInput,
         } satisfies Parameters<typeof prisma.user.findMany>[0]) as Promise<T[]>;
 
       case "job":
+        return this.prismaClient.job.findMany({
+          where: {
+            ...(params?.filter
+              ? {
+                  OR: [
+                    {
+                      title: {
+                        contains: params.filter,
+                      },
+                    },
+                    {
+                      skills: {
+                        hasSome: [params.filter],
+                      },
+                    },
+                    {
+                      location: {
+                        contains: params.filter,
+                      },
+                    },
+                    {
+                      createdAt: new Date(params.filter),
+                    },
+                  ],
+                }
+              : {}),
+            //isArchived: false,
+          },
+          take: params?.take ?? undefined,
+          skip:
+            params?.skip && params?.take
+              ? (params?.skip - 1) * params?.take
+              : undefined,
+          orderBy: {
+            createdAt: params?.orderBy ?? "desc",
+          } satisfies Prisma.JobOrderByWithRelationInput,
+          include: {
+            createdBy: true,
+          },
+        } satisfies Parameters<typeof prisma.job.findMany>[0]) as Promise<T[]>;
+
+      case "AllJobs":
         return this.prismaClient.job.findMany({
           where: {
             ...(params?.filter
@@ -89,6 +142,40 @@ export class Repository<T> implements IRepository<T> {
             params?.skip && params?.take
               ? (params?.skip - 1) * params?.take
               : undefined,
+          orderBy: {
+            createdAt: params?.orderBy ?? "desc",
+          } satisfies Prisma.JobOrderByWithRelationInput,
+        } satisfies Parameters<typeof prisma.job.findMany>[0]) as Promise<T[]>;
+
+      case "archivedJobs":
+        return this.prismaClient.job.findMany({
+          where: {
+            ...(params?.filter
+              ? {
+                  OR: [
+                    {
+                      title: {
+                        contains: params.filter,
+                      },
+                    },
+                    {
+                      skills: {
+                        hasSome: [params.filter],
+                      },
+                    },
+                  ],
+                }
+              : {}),
+            isArchived: true,
+          },
+          take: params?.take ?? undefined,
+          skip:
+            params?.skip && params?.take
+              ? (params?.skip - 1) * params?.take
+              : undefined,
+          orderBy: {
+            createdAt: params?.orderBy ?? "desc",
+          } satisfies Prisma.JobOrderByWithRelationInput,
         } satisfies Parameters<typeof prisma.job.findMany>[0]) as Promise<T[]>;
 
       case "resume":
@@ -154,6 +241,7 @@ export class Repository<T> implements IRepository<T> {
         } satisfies Parameters<typeof prisma.user.findUnique>[0]) as Promise<T | null>;
 
       case "user":
+        logger.info(id);
         return this.prismaClient.user.findUnique({
           where: {
             authId: id,

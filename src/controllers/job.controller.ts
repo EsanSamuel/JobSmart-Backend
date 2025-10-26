@@ -4,6 +4,7 @@ import { Prisma } from "../generated/prisma/client";
 import { UserService } from "../services/user.service";
 import logger from "../utils/logger";
 import { JobService } from "../services/job.service";
+import { isRecruiter } from "../middleware/authorizeRole";
 
 const jobService = new JobService();
 
@@ -20,6 +21,8 @@ class JobController {
         salaryRange,
         authId,
       } = req.body;
+
+      await isRecruiter(authId as string);
 
       const data = {
         title,
@@ -100,6 +103,52 @@ class JobController {
     }
   }
 
+  static async updateJob(req: express.Request, res: express.Response) {
+    try {
+      const jobId = req.params.id;
+      const params = req.query;
+      const { userId } = params;
+      await isRecruiter(userId as string, jobId);
+      const {
+        title,
+        company,
+        description,
+        skills,
+        location,
+        jobType,
+        salaryRange,
+      } = req.body;
+
+      const data = {
+        title,
+        company,
+        description,
+        skills,
+        location,
+        jobType,
+        salaryRange,
+      } satisfies Prisma.JobUpdateInput;
+
+      const job = await jobService.updateJob(jobId, data);
+      logger.info(job);
+      if (job) {
+        res
+          .status(201)
+          .json(new ApiSuccess(201, "Job created successfully", job));
+      } else {
+        res
+          .status(500)
+          .json(
+            new ApiError(500, "Something went wrong with listing job!,", [])
+          );
+      }
+    } catch (error) {
+      res
+        .status(500)
+        .json(new ApiError(500, "Something went wrong!,", [error]));
+    }
+  }
+
   static async submitResume(req: express.Request, res: express.Response) {
     try {
       const { authId, jobId } = req.body;
@@ -131,6 +180,9 @@ class JobController {
 
   static async getSubmittedResume(req: express.Request, res: express.Response) {
     const jobId = req.params.id;
+    const params = req.query;
+    const { userId } = params;
+    await isRecruiter(userId as string, jobId);
     try {
       const resume = await jobService.getSubmittedResume(jobId);
 

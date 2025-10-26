@@ -2,7 +2,14 @@ export interface IRepository<T> {
   create(data: any): Promise<T | null>;
   findAll(
     id?: string,
-    type?: "user" | "job" | "resume" | "matched" | "submittedResume",
+    type?:
+      | "user"
+      | "job"
+      | "resume"
+      | "matched"
+      | "submittedResume"
+      | "archivedJobs"
+      | "AllJobs",
     params?: {
       filter?: any;
       skip?: any;

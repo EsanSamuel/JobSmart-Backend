@@ -6,7 +6,10 @@ import { getPresignedUrl } from "../libs/aws";
 import { CVParser } from "../libs/pdf-parser";
 import { AnalyzeMatch } from "../ai/gemini";
 import { MatchJobQueue } from "../queue/matchjob.queue";
-import { matchResumeEvents, MatchResumeQueue } from "../queue/matchresume.queue";
+import {
+  matchResumeEvents,
+  MatchResumeQueue,
+} from "../queue/matchresume.queue";
 import { QueueEvents } from "bullmq";
 import { bullRedis } from "../config/bullmq-redis";
 
@@ -51,6 +54,17 @@ export class JobService {
   async getJob(id: string) {
     try {
       const job = await jobRepository.findById(id, "job");
+      if (job) {
+        return job as Job;
+      }
+    } catch (error) {
+      logger.info("Error creating job" + error);
+    }
+  }
+
+  async updateJob(id: string, data: any) {
+    try {
+      const job = await jobRepository.update(id, data);
       if (job) {
         return job as Job;
       }
@@ -114,9 +128,41 @@ export class JobService {
         resumes,
       });
 
-      const result = await resume.waitUntilFinished(matchResumeEvents);
+      const result = (await resume.waitUntilFinished(
+        matchResumeEvents
+      )) as Resume[];
       await MatchResumeQueue.close();
-      return result;
+
+      const filterResumeByAIscore = result
+        .filter((resume) => resume.matchPercentage !== null)
+        .sort(
+          (a: Resume, b: Resume) =>
+            (b.matchPercentage ?? 0) - (a.matchPercentage ?? 0)
+        ) as any;
+      logger.info(filterResumeByAIscore);
+
+      const resultsWithMatchPercentage = result.filter(
+        (resume) => resume.matchPercentage !== null
+      );
+      const BestFits = resultsWithMatchPercentage.filter(
+        (resume) => (resume?.matchPercentage ?? 0) >= 80
+      );
+      const PotentialFits = resultsWithMatchPercentage.filter(
+        (resume) =>
+          (resume?.matchPercentage ?? 0) >= 50 &&
+          (resume?.matchPercentage ?? 0) <= 79
+      );
+      const UnlikelyFits = resultsWithMatchPercentage.filter(
+        (resume) => (resume?.matchPercentage ?? 0) < 50
+      );
+
+      return {
+        result,
+        filterResumeByAIscore,
+        PotentialFits,
+        BestFits,
+        UnlikelyFits,
+      };
     } catch (error) {
       logger.info("Error creating job" + error);
     }
