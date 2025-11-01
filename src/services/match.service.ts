@@ -70,4 +70,15 @@ export class JobMatchService {
       logger.error("Something went wrong with matching job" + error);
     }
   }
+
+  async getMatch(userId: string) {
+    try {
+      const match = await matchRepository.findAll(userId, "matched");
+      if (match) {
+        return match;
+      }
+    } catch (error) {
+      logger.error("Something went wrong with matching job" + error);
+    }
+  }
 }

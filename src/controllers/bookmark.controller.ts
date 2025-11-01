@@ -17,7 +17,7 @@ class BookmarkController {
       const data: any = {
         user: {
           connect: {
-            authId,
+            id: authId,
           },
         },
         job: {
@@ -27,7 +27,11 @@ class BookmarkController {
         },
       } satisfies Prisma.BookmarkCreateInput;
 
-      const bookmark = await bookmarkService.addJobToBookmark(data);
+      const bookmark = await bookmarkService.addJobToBookmark(
+        data,
+        jobId,
+        authId
+      );
       logger.info(bookmark);
       if (bookmark) {
         res
@@ -37,7 +41,7 @@ class BookmarkController {
         res.status(500).json(new ApiError(500, "Something went wrong!,", []));
       }
     } catch (error) {
-        logger.error(error)
+      logger.error(error);
       res
         .status(500)
         .json(new ApiError(500, "Something went wrong!,", [error]));
@@ -66,6 +70,26 @@ class BookmarkController {
     const userId = req.params.id;
     try {
       const bookmarks = await bookmarkService.getUserBookmarks(userId);
+      if (bookmarks) {
+        res
+          .status(200)
+          .json(
+            new ApiSuccess(200, "Bookmarks fetched successfully", bookmarks)
+          );
+      } else {
+        res.status(500).json(new ApiError(500, "Something went wrong!,", []));
+      }
+    } catch (error) {
+      res
+        .status(500)
+        .json(new ApiError(500, "Something went wrong!,", [error]));
+    }
+  }
+
+    static async getBookmarkedJob(req: express.Request, res: express.Response) {
+    const jobId = req.params.id;
+    try {
+      const bookmarks = await bookmarkService.getBookmarkedJobs(jobId);
       if (bookmarks) {
         res
           .status(200)

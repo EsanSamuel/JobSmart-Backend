@@ -28,8 +28,9 @@ export class UserService {
 
   async getUser(userId: string) {
     try {
-      const user = await userRepository.findById(userId, "user");
+      const user = await userRepository.findById(userId, undefined, "user");
       if (user) {
+        console.log(user);
         return user as User;
       }
     } catch (error) {
@@ -69,6 +70,18 @@ export class UserService {
       );
       if (companies) {
         return companies as User[];
+      }
+    } catch (error) {
+      logger.info("Error fetching user" + error);
+    }
+  }
+
+  async appliedJobs(userId: string) {
+    try {
+      const applied = await resumeRepository.findAll(userId, "appliedJobs");
+
+      if (applied) {
+        return applied as Resume[];
       }
     } catch (error) {
       logger.info("Error fetching user" + error);
@@ -133,7 +146,7 @@ export class UserService {
         embedding: embedContent,
         user: {
           connect: {
-            authId: authId,
+            id: authId,
           },
         },
       } satisfies Prisma.ResumeCreateInput;

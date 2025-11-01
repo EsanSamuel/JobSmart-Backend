@@ -42,7 +42,7 @@ export const matchResumeWorker = new Worker<MatchResumeInterface>(
       }
       const parsedText = resume.parsedText;
       logger.info(parsedText);
-      const job = await jobRepository.findById(jobId, "job");
+      const job = await jobRepository.findById(jobId, undefined, "job");
       const prompt = `
               You are an expert career analyst and recruiter.
     

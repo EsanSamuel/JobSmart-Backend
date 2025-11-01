@@ -57,4 +57,24 @@ export class MatchController {
         .json(new ApiError(500, "Something went wrong!,", [error]));
     }
   }
+
+  
+    static async getUserMatches(req: express.Request, res: express.Response) {
+      const userId = req.params.id;
+      try {
+        const user = await matchService.getMatch(userId);
+        if (user) {
+          res
+            .status(200)
+            .json(new ApiSuccess(200, "User matches fetched successfully", user));
+        } else {
+          res.status(500).json(new ApiError(500, "Something went wrong!,", []));
+        }
+      } catch (error) {
+        res
+          .status(500)
+          .json(new ApiError(500, "Something went wrong!,", [error]));
+      }
+    }
+  
 }

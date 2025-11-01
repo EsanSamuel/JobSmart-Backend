@@ -5,34 +5,62 @@ import { UserService } from "../services/user.service";
 import logger from "../utils/logger";
 import { getPresignedUrl } from "../libs/aws";
 import { CVParser } from "../libs/pdf-parser";
+import { AuthService } from "../services/auth.service";
 
 const userService = new UserService();
+const authService = new AuthService();
 
 class UserController {
   static async createUser(req: express.Request, res: express.Response) {
     try {
-      const { username, email, authId, signInType } = req.body;
-      const uniqueName = email.split("@")[0];
+      const { username, email, password, role } = req.body;
 
-      const data: any = {
-        username,
-        email,
-        authId,
-        uniqueName,
-      } satisfies Prisma.UserCreateInput;
-
-      if (signInType === "USER") {
-        data.role = "USER";
-      } else if (signInType === "COMPANY") {
-        data.role = "COMPANY";
-      }
-
-      const user = await userService.createUser(data);
+      const user = await authService.register(username, email, password, role);
       logger.info(user);
       if (user) {
         res
           .status(201)
           .json(new ApiSuccess(201, "User created successfully", user));
+      } else {
+        res.status(500).json(new ApiError(500, "Something went wrong!,", []));
+      }
+    } catch (error) {
+      res
+        .status(500)
+        .json(new ApiError(500, "Something went wrong!,", [error]));
+    }
+  }
+
+  static async login(req: express.Request, res: express.Response) {
+    try {
+      const { email, password } = req.body;
+
+      const user = await authService.login(email, password);
+      logger.info(user);
+      if (user) {
+        res
+          .status(201)
+          .json(new ApiSuccess(201, "User login successfully", user));
+      } else {
+        res.status(500).json(new ApiError(500, "Something went wrong!,", []));
+      }
+    } catch (error) {
+      res
+        .status(500)
+        .json(new ApiError(500, "Something went wrong!,", [error]));
+    }
+  }
+
+  static async google_oauth(req: express.Request, res: express.Response) {
+    try {
+      const { username, email, image, role } = req.body;
+
+      const user = await authService.google_oauth(username, email, image, role);
+      logger.info(user);
+      if (user) {
+        res
+          .status(201)
+          .json(new ApiSuccess(201, "User login successfully", user));
       } else {
         res.status(500).json(new ApiError(500, "Something went wrong!,", []));
       }
@@ -159,6 +187,26 @@ class UserController {
               )
             );
         }
+      }
+    } catch (error) {
+      res
+        .status(500)
+        .json(new ApiError(500, "Something went wrong!,", [error]));
+    }
+  }
+
+  static async appliedJobs(req: express.Request, res: express.Response) {
+    try {
+      const authId = req.params.id;
+
+      const resume = await userService.appliedJobs(authId);
+      logger.info(resume);
+      if (resume) {
+        res
+          .status(201)
+          .json(new ApiSuccess(201, "Resume uploaded successfully", resume));
+      } else {
+        res.status(500).json(new ApiError(500, "Something went wrong!,", []));
       }
     } catch (error) {
       res

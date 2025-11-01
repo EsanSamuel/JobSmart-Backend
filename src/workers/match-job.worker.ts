@@ -38,6 +38,7 @@ export const matchJobWorker = new Worker<MatchJobInterface>(
         const existingMatchInDB = await matchRepository.findFirst(
           jobId,
           userId,
+
           "matched"
         );
         if (existingMatchInDB) {
@@ -47,7 +48,7 @@ export const matchJobWorker = new Worker<MatchJobInterface>(
           logger.info(existingMatchInDB);
           return existingMatchInDB;
         }
-        const job = await jobRepository.findById(jobId, "job");
+        const job = await jobRepository.findById(jobId, undefined, "job");
         const parseCVurlText = await CVParser(CVurl as string);
         const prompt = `
               You are an expert career analyst and recruiter.
@@ -115,7 +116,7 @@ export const matchJobWorker = new Worker<MatchJobInterface>(
           },
           user: {
             connect: {
-              authId: userId,
+              id: userId,
             },
           },
         } satisfies Prisma.MatchCreateInput;
@@ -139,7 +140,7 @@ export const matchJobWorker = new Worker<MatchJobInterface>(
         const user = await userRepository.findById(userId, "user");
         const parsedText = user?.Resume?.[0]?.parsedText;
         logger.info(parsedText);
-        const job = await jobRepository.findById(jobId, "job");
+        const job = await jobRepository.findById(jobId, undefined, "job");
         const prompt = `
               You are an expert career analyst and recruiter.
     
@@ -206,7 +207,7 @@ export const matchJobWorker = new Worker<MatchJobInterface>(
           },
           user: {
             connect: {
-              authId: userId,
+              id: userId,
             },
           },
         } satisfies Prisma.MatchCreateInput;

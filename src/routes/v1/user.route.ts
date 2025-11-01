@@ -9,6 +9,8 @@ const upload = multer({ storage });
 const userRouter = express.Router();
 
 userRouter.post("/", UserController.createUser);
+userRouter.post("/login", UserController.login);
+userRouter.post("/google-oauth", UserController.google_oauth);
 userRouter.get("/", UserController.getUsers);
 userRouter.get("/companies", UserController.getCompanies);
 userRouter.post(
@@ -23,5 +25,6 @@ userRouter.post(
 );
 userRouter.get("/:id", UserController.getUser);
 userRouter.patch("/:id", UserController.updateUser);
+userRouter.get("/applied-jobs/:id", UserController.appliedJobs);
 
 export default userRouter;

@@ -18,5 +18,6 @@ matchRouter.post(
   ]),
   MatchController.MatchJob
 );
+matchRouter.get("/user/:id", MatchController.getUserMatches);
 
 export default matchRouter;

@@ -7,8 +7,8 @@ const userRepository = new Repository<User>(prisma?.user);
 const jobRepository = new Repository<Job>(prisma?.job);
 
 export const isRecruiter = async (userId: string, jobId?: string) => {
-  const user = await userRepository.findById(userId, "user");
-  const job = await jobRepository.findById(jobId, "job");
+  const user = await userRepository.findById(userId, undefined, "user");
+  const job = await jobRepository.findById(jobId, undefined, "job");
   if (user?.role !== "COMPANY") {
     throw new Error("Only Company recruiter can call this function!");
   } else if (user.role === "COMPANY") {

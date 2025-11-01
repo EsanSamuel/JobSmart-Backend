@@ -20,7 +20,7 @@ model User {
   uniqueName     String?
   email          String   @unique
   profilePicture String?
-  authId         String   @unique // auth providerId eg: clerk, betterauth...
+  hashedPassword String?
   role           Role     @default(USER)
   headline       String?
   location       String?
@@ -42,19 +42,23 @@ enum Role {
 }
 
 model Job {
-  id          String   @id @default(auto()) @map("_id") @db.ObjectId
-  title       String
-  company     String
-  description String
-  skills      String[]
-  location    String?
-  jobType     JobType  @default(FULL_TIME)
-  salaryRange String?
-  isArchived  Boolean  @default(false)
-  embedding   Float[]
-  createdById String   @db.ObjectId
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id               String   @id @default(auto()) @map("_id") @db.ObjectId
+  title            String
+  company          String?
+  maxApplicants    Float
+  description      String
+  skills           String[]
+  location         String?
+  jobType          JobType  @default(FullTime)
+  salaryRange      String?
+  responsibilities String[]
+  requirements     String[]
+  benefits         String[]
+  isArchived       Boolean  @default(false)
+  embedding        Float[]
+  createdById      String   @db.ObjectId
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
 
   createdBy User       @relation(fields: [createdById], references: [id])
   Match     Match[]
@@ -63,12 +67,12 @@ model Job {
 }
 
 enum JobType {
-  FULL_TIME
-  PART_TIME
-  CONTRACT
-  INTERNSHIP
-  FREELANCE
-  TEMPORARY
+  FullTime
+  PartTime
+  Contract
+  Internship
+  Freelance
+  Temporary
 }
 
 model Resume {
@@ -85,7 +89,7 @@ model Resume {
   embedding       Float[]
   createdAt       DateTime @default(now())
   Match           Match[]
-  Job             Job?     @relation(fields: [jobId], references: [id])
+  job             Job?     @relation(fields: [jobId], references: [id])
 }
 
 model Match {

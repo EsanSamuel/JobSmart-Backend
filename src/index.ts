@@ -19,7 +19,7 @@ import "./config/redis";
 
 const app = express();
 const server = http.createServer(app);
-const PORT = 3000;
+const PORT = 5000;
 
 app.use(compression());
 

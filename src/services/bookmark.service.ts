@@ -6,11 +6,20 @@ import logger from "../utils/logger";
 const bookmarkRepository = new Repository<Bookmark>(prisma?.bookmark);
 
 export class BookmarkService {
-  async addJobToBookmark(data: any) {
+  async addJobToBookmark(data: any, jobId: string, userId: string) {
     try {
+      const isBookmarked = await bookmarkRepository.findFirst(
+        jobId,
+        userId,
+        "bookmark"
+      );
+      if (isBookmarked) {
+        logger.info("This job has been bookmarked");
+        return;
+      }
       const bookmark = await bookmarkRepository.create(data);
       if (bookmark) {
-        logger.info(bookmark)
+        logger.info(bookmark);
         return bookmark as Bookmark;
       }
     } catch (error) {
@@ -21,6 +30,20 @@ export class BookmarkService {
   async getUserBookmarks(userId: string) {
     try {
       const bookmarks = await bookmarkRepository.findAll(userId, "bookmark");
+      if (bookmarks) {
+        return bookmarks as Bookmark[];
+      }
+    } catch (error) {
+      logger.info("Something went wrong with fetching user bookmarks!");
+    }
+  }
+
+  async getBookmarkedJobs(jobId: string) {
+    try {
+      const bookmarks = await bookmarkRepository.findAll(
+        jobId,
+        "bookmarkedJobs"
+      );
       if (bookmarks) {
         return bookmarks as Bookmark[];
       }

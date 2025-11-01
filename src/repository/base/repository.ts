@@ -3,6 +3,7 @@ import { IRepository } from "./interface/repository.interface";
 import prisma from "../../config/prisma";
 import { Prisma } from "../../generated/prisma/client";
 import logger from "../../utils/logger";
+import { includes } from "zod";
 
 export class Repository<T> implements IRepository<T> {
   private readonly db: any;
@@ -28,11 +29,18 @@ export class Repository<T> implements IRepository<T> {
       | "archivedJobs"
       | "AllJobs"
       | "recruiterJob"
-      | "bookmark",
+      | "bookmark"
+      | "appliedJobs"
+      | "bookmarkedJobs",
     params?: {
       filter?: any;
       skip?: any;
       take?: number;
+      jobType?: string;
+      location?: string;
+      title?: string;
+      date?: Date;
+      company?: string;
       orderBy?: "asc" | "desc";
     }
   ): Promise<T[]> {
@@ -46,16 +54,19 @@ export class Repository<T> implements IRepository<T> {
                     {
                       username: {
                         contains: params.filter,
+                        mode: "insensitive",
                       },
                     },
                     {
                       email: {
                         contains: params.filter,
+                        mode: "insensitive",
                       },
                     },
                     {
                       uniqueName: {
                         contains: params.filter,
+                        mode: "insensitive",
                       },
                     },
                   ],
@@ -86,6 +97,7 @@ export class Repository<T> implements IRepository<T> {
                     {
                       title: {
                         contains: params.filter,
+                        mode: "insensitive",
                       },
                     },
                     {
@@ -96,12 +108,37 @@ export class Repository<T> implements IRepository<T> {
                     {
                       location: {
                         contains: params.filter,
+                        mode: "insensitive",
                       },
                     },
                     {
                       createdAt: new Date(params.filter),
                     },
                   ],
+                }
+              : {}),
+            ...(params?.company
+              ? {
+                  createdBy: {
+                    contains: params.company,
+                    mode: "insensitive",
+                  } as Prisma.UserScalarRelationFilter,
+                }
+              : {}),
+            ...(params?.location
+              ? {
+                  location: {
+                    contains: params.jobType,
+                    mode: "insensitive",
+                  },
+                }
+              : {}),
+            ...(params?.jobType
+              ? {
+                  jobType: {
+                    contains: params.jobType,
+                    mode: "insensitive",
+                  } as Prisma.EnumJobTypeFilter,
                 }
               : {}),
             //isArchived: false,
@@ -116,6 +153,7 @@ export class Repository<T> implements IRepository<T> {
           } satisfies Prisma.JobOrderByWithRelationInput,
           include: {
             createdBy: true,
+            Resume: true,
           },
         } satisfies Parameters<typeof prisma.job.findMany>[0]) as Promise<T[]>;
 
@@ -153,7 +191,7 @@ export class Repository<T> implements IRepository<T> {
         return this.prismaClient.job.findMany({
           where: {
             createdBy: {
-              authId: id,
+              id: id,
             },
             ...(params?.filter
               ? {
@@ -191,6 +229,11 @@ export class Repository<T> implements IRepository<T> {
           } satisfies Prisma.JobOrderByWithRelationInput,
           include: {
             createdBy: true,
+            Resume: {
+              include: {
+                user: true,
+              },
+            },
           },
         } satisfies Parameters<typeof prisma.job.findMany>[0]) as Promise<T[]>;
 
@@ -229,11 +272,29 @@ export class Repository<T> implements IRepository<T> {
         return this.prismaClient.resume.findMany({
           where: {
             user: {
-              authId: id,
+              id: id,
             },
           },
           include: {
             user: true,
+            job: true,
+          },
+        } satisfies Parameters<typeof prisma.resume.findMany>[0]) as Promise<
+          T[]
+        >;
+      case "appliedJobs":
+        return this.prismaClient.resume.findMany({
+          where: {
+            user: {
+              id: id,
+            },
+            jobId: {
+              not: null,
+            },
+          },
+          include: {
+            user: true,
+            job: true,
           },
         } satisfies Parameters<typeof prisma.resume.findMany>[0]) as Promise<
           T[]
@@ -243,12 +304,15 @@ export class Repository<T> implements IRepository<T> {
         return this.prismaClient.match.findMany({
           where: {
             user: {
-              authId: id,
+              id: id,
             },
           },
           include: {
             user: true,
             job: true,
+          },
+          orderBy: {
+            createdAt: "desc",
           },
         } satisfies Parameters<typeof prisma.match.findMany>[0]) as Promise<
           T[]
@@ -261,7 +325,10 @@ export class Repository<T> implements IRepository<T> {
           },
           include: {
             user: true,
-            Job: true,
+            job: true,
+          },
+          orderBy: {
+            createdAt: "desc",
           },
         } satisfies Parameters<typeof prisma.resume.findMany>[0]) as Promise<
           T[]
@@ -271,8 +338,24 @@ export class Repository<T> implements IRepository<T> {
         return this.prismaClient.bookmark.findMany({
           where: {
             user: {
-              authId: id,
+              id: id,
             },
+          },
+          include: {
+            user: true,
+            job: true,
+          },
+          orderBy: {
+            createdAt: "desc",
+          },
+        } satisfies Parameters<typeof prisma.bookmark.findMany>[0]) as Promise<
+          T[]
+        >;
+
+      case "bookmarkedJobs":
+        return this.prismaClient.bookmark.findMany({
+          where: {
+            jobId: id,
           },
           include: {
             user: true,
@@ -289,13 +372,27 @@ export class Repository<T> implements IRepository<T> {
 
   async findById(
     id?: string,
-    type?: "accountRole" | "user" | "job" | "matched" | "bookmark"
+    email?: string,
+    type?:
+      | "accountRole"
+      | "user"
+      | "job"
+      | "matched"
+      | "bookmark"
+      | "userExists"
   ): Promise<T | null> {
     switch (type) {
+      case "userExists":
+        const user = this.prismaClient.user.findUnique({
+          where: {
+            email: email,
+          },
+        } satisfies Parameters<typeof prisma.user.findUnique>[0]) as Promise<T | null>;
+        return user;
       case "accountRole":
         return this.prismaClient.user.findUnique({
           where: {
-            authId: id,
+            id: id,
           },
           select: {
             role: true,
@@ -306,7 +403,7 @@ export class Repository<T> implements IRepository<T> {
         logger.info(id);
         return this.prismaClient.user.findUnique({
           where: {
-            authId: id,
+            id: id,
           },
           include: {
             Job: true,
@@ -322,6 +419,11 @@ export class Repository<T> implements IRepository<T> {
           },
           include: {
             Match: true,
+            Resume: {
+              include: {
+                user: true,
+              },
+            },
           },
         } satisfies Parameters<typeof prisma.job.findUnique>[0]) as Promise<T | null>;
 
@@ -352,16 +454,16 @@ export class Repository<T> implements IRepository<T> {
   }
 
   async findFirst(
-    id1: string,
+    id1?: string,
     id2?: string,
-    type?: "resume" | "submitResume" | "matched"
+    type?: "resume" | "submitResume" | "matched" | "bookmark"
   ): Promise<Boolean> {
     switch (type) {
       case "resume":
         const existingResume = this.prismaClient.resume.findFirst({
           where: {
             user: {
-              authId: id1,
+              id: id1,
             },
           },
         } satisfies Parameters<typeof prisma.resume.findFirst>[0]) as Promise<Boolean>;
@@ -371,7 +473,7 @@ export class Repository<T> implements IRepository<T> {
         const Resume = this.prismaClient.resume.findFirst({
           where: {
             user: {
-              authId: id1,
+              id: id1,
             },
             jobId: id2,
           },
@@ -383,7 +485,7 @@ export class Repository<T> implements IRepository<T> {
           where: {
             jobId: id1,
             user: {
-              authId: id2,
+              id: id2,
             },
           },
           include: {
@@ -391,6 +493,20 @@ export class Repository<T> implements IRepository<T> {
           },
         } satisfies Parameters<typeof prisma.match.findFirst>[0]) as Promise<Boolean>;
         return matched;
+
+      case "bookmark":
+        const bookmark = this.prismaClient.bookmark.findFirst({
+          where: {
+            jobId: id1,
+            user: {
+              id: id2,
+            },
+          },
+          include: {
+            job: true,
+          },
+        } satisfies Parameters<typeof prisma.bookmark.findFirst>[0]) as Promise<Boolean>;
+        return bookmark;
 
       default:
         return false;

@@ -14,13 +14,16 @@ class JobController {
     try {
       const {
         title,
-        company,
+        maxApplicants,
         description,
         skills,
         location,
         jobType,
         salaryRange,
         authId,
+        requirements,
+        responsibilities,
+        benefits,
       } = req.body;
 
       //await isRecruiter(authId as string);
@@ -30,16 +33,19 @@ class JobController {
 
       const data = {
         title,
-        company,
         description,
+        maxApplicants,
         skills,
         location,
         jobType,
         salaryRange,
+        requirements,
+        responsibilities,
+        benefits,
         embedding: embedContent,
         createdBy: {
           connect: {
-            authId,
+            id: authId,
           },
         },
       } satisfies Prisma.JobCreateInput;
@@ -66,10 +72,66 @@ class JobController {
 
   static async getJobs(req: express.Request, res: express.Response) {
     const params = req.query;
-    const { filter, skip, take, orderBy } = params;
+    const {
+      filter,
+      skip,
+      take,
+      orderBy,
+      jobType,
+      location,
+      title,
+      date,
+      company,
+    } = params;
     try {
       const jobs = await jobService.getJobs({
         filter: filter,
+        jobType: jobType as string,
+        location: location as string,
+        title: title as string,
+        date: date as any,
+        company: company as string,
+        skip: Number(skip) || undefined,
+        take: Number(take) || undefined,
+        orderBy: orderBy as "asc" | "desc",
+      });
+
+      if (jobs) {
+        res
+          .status(200)
+          .json(new ApiSuccess(200, "Jobs fetched successfully", jobs));
+      } else {
+        res.status(500).json(new ApiError(500, "Something went wrong!,", []));
+      }
+    } catch (error) {
+      res
+        .status(500)
+        .json(new ApiError(500, "Something went wrong!,", [error]));
+    }
+  }
+
+  static async getCompanyJobs(req: express.Request, res: express.Response) {
+    const userId = req.params.id;
+    const params = req.query;
+    const {
+      filter,
+      skip,
+      take,
+      orderBy,
+      jobType,
+      location,
+      title,
+      date,
+      company,
+    } = params;
+    try {
+      const jobs = await jobService.getCompanyJobs(userId, {
+        filter: filter,
+        jobType: jobType as string,
+        location: location as string,
+        title: title as string,
+        date: date as any,
+        company: company as string,
         skip: Number(skip) || undefined,
         take: Number(take) || undefined,
         orderBy: orderBy as "asc" | "desc",
@@ -185,9 +247,6 @@ class JobController {
 
   static async getSubmittedResume(req: express.Request, res: express.Response) {
     const jobId = req.params.id;
-    const params = req.query;
-    const { userId } = params;
-    await isRecruiter(userId as string, jobId);
     try {
       const resume = await jobService.getSubmittedResume(jobId);
 

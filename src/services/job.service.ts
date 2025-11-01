@@ -25,7 +25,11 @@ const resumeRepository = new Repository<Resume & { user: User }[]>(
 export class JobService {
   async createJob(data: any, authId: string) {
     try {
-      const user = await userRepository.findById(authId, "accountRole");
+      const user = await userRepository.findById(
+        authId,
+        undefined,
+        "accountRole"
+      );
       if (user?.role === "COMPANY") {
         const job = await jobRepository.create(data);
         logger.info(job);
@@ -42,6 +46,11 @@ export class JobService {
     filter?: any;
     skip?: any;
     take?: number;
+    jobType?: string;
+    location?: string;
+    title?: string;
+    date?: Date;
+    company?: string;
     orderBy?: "asc" | "desc";
   }) {
     try {
@@ -54,9 +63,33 @@ export class JobService {
     }
   }
 
+  async getCompanyJobs(
+    userId: string,
+    params?: {
+      filter?: any;
+      skip?: any;
+      take?: number;
+      jobType?: string;
+      location?: string;
+      title?: string;
+      date?: Date;
+      company?: string;
+      orderBy?: "asc" | "desc";
+    }
+  ) {
+    try {
+      const jobs = await jobRepository.findAll(userId, "recruiterJob", params);
+      if (jobs) {
+        return jobs as Job[];
+      }
+    } catch (error) {
+      logger.info("Error creating job" + error);
+    }
+  }
+
   async getJob(id: string) {
     try {
-      const job = await jobRepository.findById(id, "job");
+      const job = await jobRepository.findById(id, undefined, "job");
       if (job) {
         return job as Job;
       }
@@ -98,10 +131,10 @@ export class JobService {
           parsedText,
           user: {
             connect: {
-              authId: authId,
+              id: authId,
             },
           },
-          Job: {
+          job: {
             connect: {
               id: jobId,
             },
@@ -177,7 +210,7 @@ export class JobService {
       const jobs = await jobRepository.findAll(undefined, "job");
 
       if (!user?.Resume || user?.Resume?.length === 0) {
-        logger.error("User Resumes hasn't been uploaded");
+        logger.error("User Resume hasn't been uploaded");
         return;
       }
       const userResume = user?.Resume.filter(
