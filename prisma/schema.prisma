@@ -55,6 +55,7 @@ model Job {
   requirements     String[]
   benefits         String[]
   isArchived       Boolean  @default(false)
+  isClosed         Boolean  @default(false)
   embedding        Float[]
   createdById      String   @db.ObjectId
   createdAt        DateTime @default(now())
@@ -96,6 +97,7 @@ model Match {
   id              String   @id @default(auto()) @map("_id") @db.ObjectId
   jobId           String?  @db.ObjectId
   resumeId        String?  @db.ObjectId
+  fileUrl         String?
   userId          String?  @db.ObjectId
   matchPercentage Float
   matchedSkills   String[]

@@ -134,7 +134,7 @@ export class UserService {
 
       const url = await getPresignedUrl(file);
       const parsedText = await CVParser(url as string);
-      const user = await userRepository.findById(authId, "user");
+      const user = await userRepository.findById(authId, undefined, "user");
       const userSkills = user?.skills;
 
       const embedContent: number[] | undefined | any =

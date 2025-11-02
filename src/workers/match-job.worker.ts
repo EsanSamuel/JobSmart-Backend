@@ -32,20 +32,23 @@ export const matchJobWorker = new Worker<MatchJobInterface>(
   "match_job",
   async (job: Job<MatchJobInterface>) => {
     const { jobId, userId, CVurl, resumeId } = job.data;
+    const pdfWithUUID = CVurl.split("/").pop();
+    const pdfName = pdfWithUUID?.split("=")[1];
+    logger.info(pdfName);
 
     try {
       if (!resumeId) {
         const existingMatchInDB = await matchRepository.findFirst(
           jobId,
           userId,
-
-          "matched"
+          "matched",
+          pdfName
         );
         if (existingMatchInDB) {
           logger.info(
             "Match already exist for this user and this job, returning from DB...."
           );
-          logger.info(existingMatchInDB);
+          //logger.info(existingMatchInDB);
           return existingMatchInDB;
         }
         const job = await jobRepository.findById(jobId, undefined, "job");
@@ -108,6 +111,7 @@ export const matchJobWorker = new Worker<MatchJobInterface>(
           matchPercentage: matched_percentage,
           matchedSkills: matched_skills,
           missingSkills: missing_skills,
+          fileUrl: pdfName,
           summary,
           job: {
             connect: {
@@ -128,7 +132,8 @@ export const matchJobWorker = new Worker<MatchJobInterface>(
         const existingMatchInDB = await matchRepository.findFirst(
           jobId,
           userId,
-          "matched"
+          "matched",
+          pdfName
         );
         if (existingMatchInDB) {
           logger.info(
@@ -137,8 +142,12 @@ export const matchJobWorker = new Worker<MatchJobInterface>(
           logger.info(existingMatchInDB);
           return existingMatchInDB;
         }
-        const user = await userRepository.findById(userId, "user");
-        const parsedText = user?.Resume?.[0]?.parsedText;
+        const user = await userRepository.findById(userId, undefined, "user");
+        const userResume = user?.Resume.filter(
+          (resume) => resume.jobId === null
+        );
+
+        const parsedText = userResume?.[0]?.parsedText;
         logger.info(parsedText);
         const job = await jobRepository.findById(jobId, undefined, "job");
         const prompt = `
@@ -199,6 +208,7 @@ export const matchJobWorker = new Worker<MatchJobInterface>(
           matchPercentage: matched_percentage,
           matchedSkills: matched_skills,
           missingSkills: missing_skills,
+          fileUrl: pdfName,
           summary,
           job: {
             connect: {

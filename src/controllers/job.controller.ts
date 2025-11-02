@@ -170,6 +170,24 @@ class JobController {
     }
   }
 
+  static async closeJob(req: express.Request, res: express.Response) {
+    try {
+      const jobId = req.params.id;
+      const job = await jobService.closeJob(jobId);
+       if (job) {
+        res
+          .status(200)
+          .json(new ApiSuccess(200, "Job closed successfully", job));
+      } else {
+        res.status(500).json(new ApiError(500, "Something went wrong!,", []));
+      }
+    } catch (error) {
+      res
+        .status(500)
+        .json(new ApiError(500, "Something went wrong!,", [error]));
+    }
+  }
+
   static async updateJob(req: express.Request, res: express.Response) {
     try {
       const jobId = req.params.id;

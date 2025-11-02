@@ -101,6 +101,94 @@ export class Repository<T> implements IRepository<T> {
                       },
                     },
                     {
+                      location: {
+                        contains: params.filter,
+                        mode: "insensitive",
+                      },
+                    },
+                    {
+                      salaryRange: {
+                        contains: params.filter,
+                        mode: "insensitive",
+                      },
+                    },
+                    {
+                      skills: {
+                        has: params.filter,
+                      },
+                    },
+                    {
+                      requirements: {
+                        has: params.filter,
+                      },
+                    },
+                    {
+                      responsibilities: {
+                        has: params.filter,
+                      },
+                    },
+                    {
+                      benefits: {
+                        has: params.filter,
+                      },
+                    },
+                  ],
+                }
+              : {}),
+
+            ...(params?.company
+              ? {
+                  createdBy: {
+                    contains: params.company,
+                    mode: "insensitive",
+                  } as Prisma.UserScalarRelationFilter,
+                }
+              : {}),
+
+            ...(params?.location
+              ? {
+                  location: {
+                    contains: params.location,
+                    mode: "insensitive",
+                  },
+                }
+              : {}),
+
+            ...(params?.jobType
+              ? {
+                  jobType: params.jobType as Prisma.EnumJobTypeFilter,
+                }
+              : {}),
+
+            // isArchived: false,
+          },
+          take: params?.take ?? undefined,
+          skip:
+            params?.skip && params?.take
+              ? (params?.skip - 1) * params?.take
+              : undefined,
+          orderBy: {
+            createdAt: params?.orderBy ?? "desc",
+          } satisfies Prisma.JobOrderByWithRelationInput,
+          include: {
+            createdBy: true,
+            Resume: true,
+          },
+        } satisfies Parameters<typeof prisma.job.findMany>[0]) as Promise<T[]>;
+
+      case "AllJobs":
+        return this.prismaClient.job.findMany({
+          where: {
+            ...(params?.filter
+              ? {
+                  OR: [
+                    {
+                      title: {
+                        contains: params.filter,
+                        mode: "insensitive",
+                      },
+                    },
+                    {
                       skills: {
                         hasSome: [params.filter],
                       },
@@ -112,7 +200,25 @@ export class Repository<T> implements IRepository<T> {
                       },
                     },
                     {
-                      createdAt: new Date(params.filter),
+                      requirements: {
+                        hasSome: [params.filter],
+                      },
+                    },
+                    {
+                      responsibilities: {
+                        hasSome: [params.filter],
+                      },
+                    },
+                    {
+                      benefits: {
+                        hasSome: [params.filter],
+                      },
+                    },
+                    {
+                      salaryRange: {
+                        contains: params.filter,
+                        mode: "insensitive",
+                      },
                     },
                   ],
                 }
@@ -142,40 +248,6 @@ export class Repository<T> implements IRepository<T> {
                 }
               : {}),
             //isArchived: false,
-          },
-          take: params?.take ?? undefined,
-          skip:
-            params?.skip && params?.take
-              ? (params?.skip - 1) * params?.take
-              : undefined,
-          orderBy: {
-            createdAt: params?.orderBy ?? "desc",
-          } satisfies Prisma.JobOrderByWithRelationInput,
-          include: {
-            createdBy: true,
-            Resume: true,
-          },
-        } satisfies Parameters<typeof prisma.job.findMany>[0]) as Promise<T[]>;
-
-      case "AllJobs":
-        return this.prismaClient.job.findMany({
-          where: {
-            ...(params?.filter
-              ? {
-                  OR: [
-                    {
-                      title: {
-                        contains: params.filter,
-                      },
-                    },
-                    {
-                      skills: {
-                        hasSome: [params.filter],
-                      },
-                    },
-                  ],
-                }
-              : {}),
           },
           take: params?.take ?? undefined,
           skip:
@@ -456,7 +528,8 @@ export class Repository<T> implements IRepository<T> {
   async findFirst(
     id1?: string,
     id2?: string,
-    type?: "resume" | "submitResume" | "matched" | "bookmark"
+    type?: "resume" | "submitResume" | "matched" | "bookmark",
+    url?: string
   ): Promise<Boolean> {
     switch (type) {
       case "resume":
@@ -465,6 +538,7 @@ export class Repository<T> implements IRepository<T> {
             user: {
               id: id1,
             },
+            jobId: null,
           },
         } satisfies Parameters<typeof prisma.resume.findFirst>[0]) as Promise<Boolean>;
         return existingResume;
@@ -487,6 +561,7 @@ export class Repository<T> implements IRepository<T> {
             user: {
               id: id2,
             },
+            fileUrl: url,
           },
           include: {
             job: true,

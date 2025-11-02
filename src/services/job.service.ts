@@ -13,8 +13,9 @@ import {
 import { QueueEvents } from "bullmq";
 import { bullRedis } from "../config/bullmq-redis";
 import { cosineSimilarity } from "../utils/cosineSimilarity";
+import { classicNameResolver } from "typescript";
 
-const jobRepository = new Repository<Job>(prisma?.job);
+const jobRepository = new Repository<Job & { Resume: Resume[] }>(prisma?.job);
 const userRepository = new Repository<
   User & { Resume: Resume[] } & { embedding: { values: number[] } }
 >(prisma?.user);
@@ -55,6 +56,14 @@ export class JobService {
   }) {
     try {
       const jobs = await jobRepository.findAll(undefined, "job", params);
+
+      for (const job of jobs) {
+        if (job.maxApplicants === job.Resume.length) {
+          await jobRepository.update(job.id, {
+            isClosed: true,
+          } satisfies Prisma.JobUpdateInput);
+        }
+      }
       if (jobs) {
         return jobs as Job[];
       }
@@ -95,6 +104,19 @@ export class JobService {
       }
     } catch (error) {
       logger.info("Error creating job" + error);
+    }
+  }
+
+  async closeJob(jobId: string) {
+    try {
+      const close = await jobRepository.update(jobId, {
+        isClosed: true,
+      } satisfies Prisma.JobUpdateInput);
+      if (close) {
+        return close;
+      }
+    } catch (error) {
+      logger.info("Error closing job" + error);
     }
   }
 
@@ -206,7 +228,7 @@ export class JobService {
 
   async AIjobRecommendation(userId: string) {
     try {
-      const user = await userRepository.findById(userId, "user");
+      const user = await userRepository.findById(userId, undefined, "user");
       const jobs = await jobRepository.findAll(undefined, "job");
 
       if (!user?.Resume || user?.Resume?.length === 0) {
@@ -214,7 +236,7 @@ export class JobService {
         return;
       }
       const userResume = user?.Resume.filter(
-        (resume) => resume.embedding !== null
+        (resume) => resume.embedding !== null && resume.jobId === null
       );
       const resumeEmbedding = userResume?.[0]?.embedding ?? [0];
 

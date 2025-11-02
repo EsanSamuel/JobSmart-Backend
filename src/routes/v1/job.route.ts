@@ -25,5 +25,6 @@ jobRouter.patch("/:id", JobController.updateJob);
 jobRouter.get("/resume/:id", JobController.getSubmittedResume);
 jobRouter.get("/company/:id", JobController.getCompanyJobs);
 jobRouter.get("/ai-recommedation/:id", JobController.getAIrecoomendation);
+jobRouter.patch("/close/:id", JobController.closeJob);
 
 export default jobRouter;

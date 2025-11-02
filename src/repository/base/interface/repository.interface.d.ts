@@ -40,7 +40,8 @@ export interface IRepository<T> {
   findFirst(
     id1?: string,
     id2?: string,
-    type?: "resume" | "submitResume" | "matched" | "userExists" | "bookmark"
+    type?: "resume" | "submitResume" | "matched" | "userExists" | "bookmark",
+    url?: string
   ): Promise<Boolean>;
   update(id: string, data: Partial<T>, type?: string): Promise<T | null>;
   delete(id: string, type?: string): Promise<Boolean>;

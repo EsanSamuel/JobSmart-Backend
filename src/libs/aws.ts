@@ -13,7 +13,7 @@ export const getPresignedUrl = async (file: Express.Multer.File) => {
       return null;
     }
 
-    const uniqueKey = `${uuidu4()}-${file.originalname}`;
+    const uniqueKey = `${uuidu4()}=${file.originalname}`;
 
     const command = new PutObjectCommand({
       Key: uniqueKey,
