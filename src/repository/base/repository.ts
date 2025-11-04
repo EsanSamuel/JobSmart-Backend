@@ -271,6 +271,7 @@ export class Repository<T> implements IRepository<T> {
                     {
                       title: {
                         contains: params.filter,
+                        mode: "insensitive",
                       },
                     },
                     {
@@ -281,10 +282,29 @@ export class Repository<T> implements IRepository<T> {
                     {
                       location: {
                         contains: params.filter,
+                        mode: "insensitive",
                       },
                     },
                     {
-                      createdAt: new Date(params.filter),
+                      requirements: {
+                        hasSome: [params.filter],
+                      },
+                    },
+                    {
+                      responsibilities: {
+                        hasSome: [params.filter],
+                      },
+                    },
+                    {
+                      benefits: {
+                        hasSome: [params.filter],
+                      },
+                    },
+                    {
+                      salaryRange: {
+                        contains: params.filter,
+                        mode: "insensitive",
+                      },
                     },
                   ],
                 }

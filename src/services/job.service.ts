@@ -1,4 +1,10 @@
-import { Job, Prisma, Resume, User } from "../generated/prisma/client";
+import {
+  Interview,
+  Job,
+  Prisma,
+  Resume,
+  User,
+} from "../generated/prisma/client";
 import { Repository } from "../repository/base/repository";
 import prisma from "../config/prisma";
 import logger from "../utils/logger";
@@ -14,6 +20,8 @@ import { QueueEvents } from "bullmq";
 import { bullRedis } from "../config/bullmq-redis";
 import { cosineSimilarity } from "../utils/cosineSimilarity";
 import { classicNameResolver } from "typescript";
+import RedisService from "./redis.service";
+import crypto from "crypto";
 
 const jobRepository = new Repository<Job & { Resume: Resume[] }>(prisma?.job);
 const userRepository = new Repository<
@@ -22,6 +30,8 @@ const userRepository = new Repository<
 const resumeRepository = new Repository<Resume & { user: User }[]>(
   prisma?.resume
 );
+const interviewRepository = new Repository<Interview>(prisma.interview);
+const redisService = new RedisService();
 
 export class JobService {
   async createJob(data: any, authId: string) {
@@ -55,6 +65,13 @@ export class JobService {
     orderBy?: "asc" | "desc";
   }) {
     try {
+      const paramsString = JSON.stringify(params || {});
+      const key = crypto.createHash("md5").update(paramsString).digest("hex");
+      const cachedKey = `jobs:${key}`;
+      const cachedJobs = await redisService.get(cachedKey);
+      /*if (cachedJobs) {
+        return cachedJobs as Job[];
+      }*/
       const jobs = await jobRepository.findAll(undefined, "job", params);
 
       for (const job of jobs) {
@@ -65,6 +82,7 @@ export class JobService {
         }
       }
       if (jobs) {
+        await redisService.set(cachedKey, jobs, 600);
         return jobs as Job[];
       }
     } catch (error) {
@@ -87,8 +105,16 @@ export class JobService {
     }
   ) {
     try {
+      const paramsString = JSON.stringify(params || {});
+      const key = crypto.createHash("md5").update(paramsString).digest("hex");
+      const cachedKey = `companyJobs:${key}`;
+      const cachedJobs = await redisService.get(cachedKey);
+      /*if (cachedJobs) {
+        return cachedJobs as Job[];
+      }*/
       const jobs = await jobRepository.findAll(userId, "recruiterJob", params);
       if (jobs) {
+        await redisService.set(cachedKey, jobs, 600);
         return jobs as Job[];
       }
     } catch (error) {
@@ -98,6 +124,11 @@ export class JobService {
 
   async getJob(id: string) {
     try {
+      const key = `job:${id}`;
+      const cachedJob = await redisService.get(key);
+      if (cachedJob) {
+        return cachedJob as Job;
+      }
       const job = await jobRepository.findById(id, undefined, "job");
       if (job) {
         return job as Job;
@@ -174,6 +205,11 @@ export class JobService {
 
   async getSubmittedResume(jobId: string) {
     try {
+      const key = `Resume:${jobId}`;
+      /*const cachedResumes = await redisService.get(key);
+      if (cachedResumes) {
+        return cachedResumes;
+      }*/
       const resumes = await resumeRepository.findAll(jobId, "submittedResume");
 
       if (!resumes || resumes.length === 0) {
@@ -212,6 +248,18 @@ export class JobService {
       );
       const UnlikelyFits = resultsWithMatchPercentage.filter(
         (resume) => (resume?.matchPercentage ?? 0) < 50
+      );
+
+      await redisService.set(
+        key,
+        {
+          result,
+          filterResumeByAIscore,
+          PotentialFits,
+          BestFits,
+          UnlikelyFits,
+        },
+        600
       );
 
       return {
@@ -269,6 +317,70 @@ export class JobService {
       return filterJobs;
     } catch (error) {
       logger.info("Error creating job" + error);
+    }
+  }
+
+  async addApplicantsToShortList(resumeId: string) {
+    try {
+      const data = {
+        status: "ShortListed",
+      } satisfies Prisma.ResumeUpdateInput;
+      const status = await resumeRepository.update(resumeId, data);
+      if (status) {
+        return status;
+      }
+    } catch (error) {
+      logger.info("Error adding applicant to shortlist" + error);
+    }
+  }
+
+  async acceptApplicants(resumeId: string) {
+    try {
+      const data = {
+        status: "Accepted",
+      } satisfies Prisma.ResumeUpdateInput;
+      const status = await resumeRepository.update(resumeId, data);
+      if (status) {
+        return status;
+      }
+    } catch (error) {
+      logger.info("Error accepting applicant" + error);
+    }
+  }
+
+  async interviewApplicant(
+    jobId: string,
+    userId: string,
+    resumeId: string,
+    interviewUrl: string,
+    interViewDate: Date
+  ) {
+    try {
+      const data = {
+        job: {
+          connect: {
+            id: jobId,
+          },
+        },
+        user: {
+          connect: {
+            id: userId,
+          },
+        },
+        resume: {
+          connect: {
+            id: resumeId,
+          },
+        },
+        interviewUrl,
+        interViewDate,
+      } satisfies Prisma.InterviewCreateInput;
+      const interview = await interviewRepository.create(data);
+      if (interview) {
+        return interview;
+      }
+    } catch (error) {
+      logger.info("Error accepting applicant" + error);
     }
   }
 }

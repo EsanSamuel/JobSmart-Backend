@@ -28,12 +28,13 @@ model User {
   bio            String?
   profileImage   String?
 
-  createdAt DateTime   @default(now())
-  updatedAt DateTime   @updatedAt
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
   Job       Job[]
   Resume    Resume[]
   Match     Match[]
   Bookmark  Bookmark[]
+  interview Interview[]
 }
 
 enum Role {
@@ -61,10 +62,11 @@ model Job {
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
 
-  createdBy User       @relation(fields: [createdById], references: [id])
+  createdBy User        @relation(fields: [createdById], references: [id])
   Match     Match[]
   Resume    Resume[]
   Bookmark  Bookmark[]
+  interview Interview[]
 }
 
 enum JobType {
@@ -77,20 +79,30 @@ enum JobType {
 }
 
 model Resume {
-  id              String   @id @default(auto()) @map("_id") @db.ObjectId
+  id              String           @id @default(auto()) @map("_id") @db.ObjectId
   fileUrl         String
   parsedText      String
-  user            User?    @relation(fields: [userId], references: [id])
-  userId          String?  @db.ObjectId
-  jobId           String?  @db.ObjectId
+  user            User?            @relation(fields: [userId], references: [id])
+  userId          String?          @db.ObjectId
+  jobId           String?          @db.ObjectId
   matchPercentage Float?
   matchedSkills   String[]
   missingSkills   String[]
   summary         String?
   embedding       Float[]
-  createdAt       DateTime @default(now())
+  status          ApplicantStatus? @default(Pending)
+  createdAt       DateTime         @default(now())
   Match           Match[]
-  job             Job?     @relation(fields: [jobId], references: [id])
+  job             Job?             @relation(fields: [jobId], references: [id])
+  interview       Interview[]
+}
+
+enum ApplicantStatus {
+  Pending
+  ShortListed
+  Interview
+  Rejected
+  Accepted
 }
 
 model Match {
@@ -119,4 +131,19 @@ model Bookmark {
 
   job  Job?  @relation(fields: [jobId], references: [id])
   user User? @relation(fields: [userId], references: [id])
+}
+
+model Interview {
+  id            String   @id @default(auto()) @map("_id") @db.ObjectId
+  jobId         String   @db.ObjectId
+  userId        String   @db.ObjectId
+  interviewUrl  String
+  interViewDate DateTime
+  resumeId      String   @db.ObjectId
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  job    Job?    @relation(fields: [jobId], references: [id])
+  user   User?   @relation(fields: [userId], references: [id])
+  resume Resume? @relation(fields: [resumeId], references: [id])
 }

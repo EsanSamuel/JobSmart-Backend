@@ -174,7 +174,7 @@ class JobController {
     try {
       const jobId = req.params.id;
       const job = await jobService.closeJob(jobId);
-       if (job) {
+      if (job) {
         res
           .status(200)
           .json(new ApiSuccess(200, "Job closed successfully", job));
@@ -303,6 +303,97 @@ class JobController {
           .json(new ApiSuccess(200, "AI Jobs recommendation", jobs));
       } else {
         res.status(500).json(new ApiError(500, "Something went wrong!,", []));
+      }
+    } catch (error) {
+      res
+        .status(500)
+        .json(new ApiError(500, "Something went wrong!,", [error]));
+    }
+  }
+
+  static async addShortlistedApplicants(
+    req: express.Request,
+    res: express.Response
+  ) {
+    const resumeId = req.params.id;
+
+    try {
+      const status = await jobService.addApplicantsToShortList(resumeId);
+
+      if (status) {
+        res
+          .status(200)
+          .json(new ApiSuccess(200, "Applicant added to shortlist", status));
+      } else {
+        res
+          .status(500)
+          .json(
+            new ApiError(
+              500,
+              "Something went wrong with adding applicant to shortlist!,",
+              []
+            )
+          );
+      }
+    } catch (error) {
+      res
+        .status(500)
+        .json(new ApiError(500, "Something went wrong!,", [error]));
+    }
+  }
+
+  static async acceptApplicant(req: express.Request, res: express.Response) {
+    const resumeId = req.params.id;
+
+    try {
+      const status = await jobService.acceptApplicants(resumeId);
+
+      if (status) {
+        res.status(200).json(new ApiSuccess(200, "Applicant accepted", status));
+      } else {
+        res
+          .status(500)
+          .json(
+            new ApiError(
+              500,
+              "Something went wrong with adding applicant to shortlist!,",
+              []
+            )
+          );
+      }
+    } catch (error) {
+      res
+        .status(500)
+        .json(new ApiError(500, "Something went wrong!,", [error]));
+    }
+  }
+
+  static async interviewApplicant(req: express.Request, res: express.Response) {
+    const { jobId, resumeId, userId, interviewUrl, interViewDate } = req.body;
+
+    try {
+      const status = await jobService.interviewApplicant(
+        jobId,
+        userId,
+        resumeId,
+        interviewUrl,
+        interViewDate
+      );
+
+      if (status) {
+        res
+          .status(200)
+          .json(new ApiSuccess(200, "Applicant called for interview", status));
+      } else {
+        res
+          .status(500)
+          .json(
+            new ApiError(
+              500,
+              "Something went wrong with adding applicant to shortlist!,",
+              []
+            )
+          );
       }
     } catch (error) {
       res

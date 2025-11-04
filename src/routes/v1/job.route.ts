@@ -20,11 +20,14 @@ jobRouter.post(
   ]),
   JobController.submitResume
 );
+jobRouter.post("/create-interview", JobController.interviewApplicant);
 jobRouter.get("/:id", JobController.getJob);
 jobRouter.patch("/:id", JobController.updateJob);
 jobRouter.get("/resume/:id", JobController.getSubmittedResume);
 jobRouter.get("/company/:id", JobController.getCompanyJobs);
 jobRouter.get("/ai-recommedation/:id", JobController.getAIrecoomendation);
 jobRouter.patch("/close/:id", JobController.closeJob);
+jobRouter.patch("/shortlist/:id", JobController.addShortlistedApplicants);
+jobRouter.patch("/accept/:id", JobController.acceptApplicant);
 
 export default jobRouter;
