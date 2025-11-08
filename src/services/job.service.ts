@@ -49,7 +49,7 @@ export class JobService {
         logger.info("Only companies can list jobs");
       }
     } catch (error) {
-      logger.info("Error creating job" + error);
+      logger.error("Error creating job" + error);
     }
   }
 
@@ -86,7 +86,7 @@ export class JobService {
         return jobs as Job[];
       }
     } catch (error) {
-      logger.info("Error creating job" + error);
+      logger.error("Error creating job" + error);
     }
   }
 
@@ -118,7 +118,7 @@ export class JobService {
         return jobs as Job[];
       }
     } catch (error) {
-      logger.info("Error creating job" + error);
+      logger.error("Error creating job" + error);
     }
   }
 
@@ -134,7 +134,7 @@ export class JobService {
         return job as Job;
       }
     } catch (error) {
-      logger.info("Error creating job" + error);
+      logger.error("Error creating job" + error);
     }
   }
 
@@ -147,7 +147,7 @@ export class JobService {
         return close;
       }
     } catch (error) {
-      logger.info("Error closing job" + error);
+      logger.error("Error closing job" + error);
     }
   }
 
@@ -158,7 +158,7 @@ export class JobService {
         return job as Job;
       }
     } catch (error) {
-      logger.info("Error creating job" + error);
+      logger.error("Error creating job" + error);
     }
   }
 
@@ -199,7 +199,7 @@ export class JobService {
         }
       }
     } catch (error) {
-      logger.info("Error creating job" + error);
+      logger.error("Error creating job" + error);
     }
   }
 
@@ -270,7 +270,7 @@ export class JobService {
         UnlikelyFits,
       };
     } catch (error) {
-      logger.info("Error creating job" + error);
+      logger.error("Error creating job" + error);
     }
   }
 
@@ -316,7 +316,7 @@ export class JobService {
 
       return filterJobs;
     } catch (error) {
-      logger.info("Error creating job" + error);
+      logger.error("Error creating job" + error);
     }
   }
 
@@ -330,7 +330,7 @@ export class JobService {
         return status;
       }
     } catch (error) {
-      logger.info("Error adding applicant to shortlist" + error);
+      logger.error("Error adding applicant to shortlist" + error);
     }
   }
 
@@ -344,7 +344,7 @@ export class JobService {
         return status;
       }
     } catch (error) {
-      logger.info("Error accepting applicant" + error);
+      logger.error("Error accepting applicant" + error);
     }
   }
 
@@ -380,7 +380,7 @@ export class JobService {
         return interview;
       }
     } catch (error) {
-      logger.info("Error accepting applicant" + error);
+      logger.error("Error accepting applicant" + error);
     }
   }
 }

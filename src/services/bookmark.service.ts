@@ -25,7 +25,7 @@ export class BookmarkService {
         return bookmark as Bookmark;
       }
     } catch (error) {
-      logger.info("Something went wrong with adding job to bookmark!");
+      logger.error("Something went wrong with adding job to bookmark!");
     }
   }
 
@@ -42,7 +42,7 @@ export class BookmarkService {
         return bookmarks as Bookmark[];
       }
     } catch (error) {
-      logger.info("Something went wrong with fetching user bookmarks!");
+      logger.error("Something went wrong with fetching user bookmarks!");
     }
   }
 
@@ -56,7 +56,7 @@ export class BookmarkService {
         return bookmarks as Bookmark[];
       }
     } catch (error) {
-      logger.info("Something went wrong with fetching user bookmarks!");
+      logger.error("Something went wrong with fetching user bookmarks!");
     }
   }
 
@@ -67,7 +67,7 @@ export class BookmarkService {
         return bookmark as Bookmark;
       }
     } catch (error) {
-      logger.info("Something went wrong with fetching bookmark!");
+      logger.error("Something went wrong with fetching bookmark!");
     }
   }
 
@@ -75,7 +75,7 @@ export class BookmarkService {
     await bookmarkRepository.delete(id);
     try {
     } catch (error) {
-      logger.info("Something went wrong with deleting bookmark!");
+      logger.error("Something went wrong with deleting bookmark!");
     }
   }
 }

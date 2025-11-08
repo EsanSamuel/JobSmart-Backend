@@ -22,7 +22,7 @@ export class UserService {
         logger.info("Error creating user");
       }
     } catch (error) {
-      logger.info("Error creating user" + error);
+      logger.error("Error creating user" + error);
     }
   }
 
@@ -34,7 +34,7 @@ export class UserService {
         return user as User;
       }
     } catch (error) {
-      logger.info("Error fetching user" + error);
+      logger.error("Error fetching user" + error);
     }
   }
 
@@ -52,7 +52,7 @@ export class UserService {
         return users as User[];
       }
     } catch (error) {
-      logger.info("Error fetching user" + error);
+      logger.error("Error fetching user" + error);
     }
   }
 
@@ -72,7 +72,7 @@ export class UserService {
         return companies as User[];
       }
     } catch (error) {
-      logger.info("Error fetching user" + error);
+      logger.error("Error fetching user" + error);
     }
   }
 
@@ -84,7 +84,7 @@ export class UserService {
         return applied as Resume[];
       }
     } catch (error) {
-      logger.info("Error fetching user" + error);
+      logger.error("Error fetching user" + error);
     }
   }
 
@@ -113,10 +113,10 @@ export class UserService {
         console.log(updateResumeEmbedding);
         return profile as User;
       } else {
-        logger.info("Error updating user profile");
+        logger.error("Error updating user profile");
       }
     } catch (error) {
-      logger.info("Error updating user profile" + error);
+      logger.error("Error updating user profile" + error);
     }
   }
 
@@ -155,7 +155,7 @@ export class UserService {
         return resume as Resume;
       }
     } catch (error) {
-      logger.info("Error uploading resume" + error);
+      logger.error("Error uploading resume" + error);
     }
   }
 }
