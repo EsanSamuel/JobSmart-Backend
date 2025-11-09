@@ -3,7 +3,6 @@ import { IRepository } from "./interface/repository.interface";
 import prisma from "../../config/prisma";
 import { Prisma } from "../../generated/prisma/client";
 import logger from "../../utils/logger";
-import { includes } from "zod";
 
 export class Repository<T> implements IRepository<T> {
   private readonly db: any;
