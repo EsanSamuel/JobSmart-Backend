@@ -13,6 +13,7 @@ export interface IRepository<T> {
       | "recruiterJob"
       | "bookmark"
       | "appliedJobs"
+      | "rooms"
       | "bookmarkedJobs",
     params?: {
       filter?: any;
@@ -36,6 +37,8 @@ export interface IRepository<T> {
       | "matched"
       | "bookmark"
       | "userExists"
+      | "room"
+      | "message"
   ): Promise<T | null>;
   findFirst(
     id1?: string,

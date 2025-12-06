@@ -30,6 +30,7 @@ export class Repository<T> implements IRepository<T> {
       | "recruiterJob"
       | "bookmark"
       | "appliedJobs"
+      | "rooms"
       | "bookmarkedJobs",
     params?: {
       filter?: any;
@@ -456,6 +457,23 @@ export class Repository<T> implements IRepository<T> {
           T[]
         >;
 
+      case "rooms":
+        const userId = id;
+        return this.prismaClient.room.findMany({
+          where: {
+            userIds: {
+              has: userId,
+            },
+          },
+          include: {
+            users: true,
+            messages: true,
+          },
+          orderBy: {
+            createdAt: "desc",
+          },
+        } satisfies Parameters<typeof prisma.room.findMany>[0]) as Promise<T[]>;
+
       default:
         throw new Error(`Unsupported type: ${type}`);
     }
@@ -471,6 +489,8 @@ export class Repository<T> implements IRepository<T> {
       | "matched"
       | "bookmark"
       | "userExists"
+      | "room"
+      | "message"
   ): Promise<T | null> {
     switch (type) {
       case "userExists":
@@ -538,6 +558,30 @@ export class Repository<T> implements IRepository<T> {
             job: true,
           },
         } satisfies Parameters<typeof prisma.bookmark.findUnique>[0]) as Promise<T | null>;
+
+      case "room":
+        logger.info(id);
+        return this.prismaClient.room.findUnique({
+          where: {
+            id: id,
+          },
+          include: {
+            users: true,
+            messages: true,
+          },
+        } satisfies Parameters<typeof prisma.room.findUnique>[0]) as Promise<T | null>;
+
+      case "message":
+        logger.info(id);
+        return this.prismaClient.message.findUnique({
+          where: {
+            id: id,
+          },
+          include: {
+            sender: true,
+            room: true,
+          },
+        } satisfies Parameters<typeof prisma.message.findUnique>[0]) as Promise<T | null>;
 
       default:
         throw new Error(`Unsupported type: ${type}`);
@@ -617,6 +661,10 @@ export class Repository<T> implements IRepository<T> {
   }
 
   async delete(id: string, type?: string): Promise<Boolean> {
-    return true;
+    return this.db.delete({
+      where: {
+        id,
+      },
+    });
   }
 }

@@ -35,6 +35,11 @@ model User {
   Match     Match[]
   Bookmark  Bookmark[]
   interview Interview[]
+
+  roomIds       String[]       @db.ObjectId
+  rooms         Room[]         @relation(fields: [roomIds], references: [id])
+  messages      Message[]
+  notifications Notification[]
 }
 
 enum Role {
@@ -62,11 +67,12 @@ model Job {
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
 
-  createdBy User        @relation(fields: [createdById], references: [id])
-  Match     Match[]
-  Resume    Resume[]
-  Bookmark  Bookmark[]
-  interview Interview[]
+  createdBy     User           @relation(fields: [createdById], references: [id])
+  Match         Match[]
+  Resume        Resume[]
+  Bookmark      Bookmark[]
+  interview     Interview[]
+  notifications Notification[]
 }
 
 enum JobType {
@@ -146,4 +152,45 @@ model Interview {
   job    Job?    @relation(fields: [jobId], references: [id])
   user   User?   @relation(fields: [userId], references: [id])
   resume Resume? @relation(fields: [resumeId], references: [id])
+}
+
+model Room {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  isGroup   Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  userIds  String[]  @db.ObjectId
+  users    User[]    @relation(fields: [userIds], references: [id])
+  messages Message[]
+}
+
+model Message {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  content   String?
+  Files     String[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  seenIds   String[] @db.ObjectId
+  senderId  String   @db.ObjectId
+  roomId    String   @db.ObjectId
+
+  room   Room @relation(fields: [roomId], references: [id])
+  sender User @relation(fields: [senderId], references: [id])
+}
+
+model Notification {
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  actorId    String   @db.ObjectId
+  receiverId String   @db.ObjectId
+  event_type String
+  message    String
+  isRead     Boolean  @default(false)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  jobId      String?  @db.ObjectId
+
+  job    Job?    @relation(fields: [jobId], references: [id])
+  User   User?   @relation(fields: [userId], references: [id])
+  userId String? @db.ObjectId
 }
