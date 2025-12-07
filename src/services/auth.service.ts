@@ -6,6 +6,9 @@ import { getPresignedUrl } from "../libs/aws";
 import { CVParser } from "../libs/pdf-parser";
 import { getEmbedding } from "../ai/gemini";
 import bcyrpt from "bcryptjs";
+import crypto from "crypto";
+import { sendResetEmail } from "../libs/sendresetEmail";
+import { sendVerificationEmail } from "../libs/sendVerificationEmail";
 
 const userRepository = new Repository<User & { Resume: Resume[] }>(
   prisma?.user
@@ -32,6 +35,7 @@ export class AuthService {
       );
 
       const hashedPassword = await bcyrpt.hash(password, 10);
+      const token = crypto.randomBytes(35).toString("hex");
 
       if (!userExists) {
         let signInRole = "";
@@ -46,12 +50,42 @@ export class AuthService {
           hashedPassword,
           uniqueName,
           role: signInRole as "USER" | "COMPANY",
+          verificationToken: token,
         } satisfies Prisma.UserCreateInput;
 
         const user = await userRepository.create(data);
+
+        if (user) {
+          await sendVerificationEmail(email, token);
+        }
         logger.info(user);
         return user;
       }
+    } catch (error) {
+      logger.error(error);
+      return null;
+    }
+  }
+
+  async verifyEmail(token: string) {
+    try {
+      if (!token) {
+        throw new Error("No token");
+      }
+
+      const userToken = await prisma.user.findFirst({
+        where: {
+          verificationToken: token,
+        },
+      });
+
+      const data = {
+        emailVerified: new Date(),
+        verificationToken: null,
+      } satisfies Prisma.UserUpdateInput;
+
+      const user = await userRepository.update(userToken?.id!, data);
+      return user;
     } catch (error) {
       logger.error(error);
       return null;
@@ -124,6 +158,56 @@ export class AuthService {
         logger.info("Existing user logging in:" + userExists);
         return userExists;
       }
+    } catch (error) {
+      logger.error(error);
+      return null;
+    }
+  }
+
+  async resetPasswordRequest(email: string) {
+    try {
+      const user = await userRepository.findById(
+        undefined,
+        email,
+        "userExists"
+      );
+      const token = crypto.randomBytes(35).toString("hex");
+
+      const data = {
+        resetToken: token,
+        tokenExpires: new Date(Date.now() + 30 * 60 * 1000),
+      } satisfies Prisma.UserUpdateInput;
+
+      const userToken = await userRepository.update(user?.id!, data);
+
+      await sendResetEmail(email, token);
+
+      return userToken;
+    } catch (error) {
+      logger.error(error);
+      return null;
+    }
+  }
+
+  async resetPassword(token: string, newPassword: string) {
+    try {
+      const user = await prisma.user.findFirst({
+        where: {
+          resetToken: token,
+          tokenExpires: { gt: new Date() },
+        },
+      });
+
+      const hashedPassword = await bcyrpt.hash(newPassword, 10);
+
+      const data = {
+        hashedPassword,
+        resetToken: null,
+      } satisfies Prisma.UserUpdateInput;
+
+      const updatePassword = await userRepository.update(user?.id!, data);
+
+      return updatePassword;
     } catch (error) {
       logger.error(error);
       return null;

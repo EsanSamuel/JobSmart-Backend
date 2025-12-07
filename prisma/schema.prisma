@@ -15,18 +15,22 @@ datasource db {
 }
 
 model User {
-  id             String   @id @default(auto()) @map("_id") @db.ObjectId
-  username       String
-  uniqueName     String?
-  email          String   @unique
-  profilePicture String?
-  hashedPassword String?
-  role           Role     @default(USER)
-  headline       String?
-  location       String?
-  skills         String[]
-  bio            String?
-  profileImage   String?
+  id                String    @id @default(auto()) @map("_id") @db.ObjectId
+  username          String
+  uniqueName        String?
+  email             String    @unique
+  profilePicture    String?
+  hashedPassword    String?
+  role              Role      @default(USER)
+  headline          String?
+  location          String?
+  skills            String[]
+  bio               String?
+  profileImage      String?
+  emailVerified     DateTime?
+  verificationToken String?
+  resetToken        String?
+  tokenExpires      DateTime?
 
   createdAt DateTime    @default(now())
   updatedAt DateTime    @updatedAt

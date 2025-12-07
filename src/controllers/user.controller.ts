@@ -71,6 +71,72 @@ class UserController {
     }
   }
 
+  static async reset_password_request(
+    req: express.Request,
+    res: express.Response
+  ) {
+    try {
+      const { email } = req.body;
+
+      const request = await authService.resetPasswordRequest(email);
+      logger.info(request);
+      if (request) {
+        res
+          .status(201)
+          .json(new ApiSuccess(201, "Request successfully", request));
+      } else {
+        res.status(500).json(new ApiError(500, "Something went wrong!,", []));
+      }
+    } catch (error) {
+      res
+        .status(500)
+        .json(new ApiError(500, "Something went wrong!,", [error]));
+    }
+  }
+
+    static async verify(
+    req: express.Request,
+    res: express.Response
+  ) {
+    try {
+      const { token } = req.body;
+
+      const request = await authService.verifyEmail(token);
+      logger.info(request);
+      if (request) {
+        res
+          .status(201)
+          .json(new ApiSuccess(201, "Request successfully", request));
+      } else {
+        res.status(500).json(new ApiError(500, "Something went wrong!,", []));
+      }
+    } catch (error) {
+      res
+        .status(500)
+        .json(new ApiError(500, "Something went wrong!,", [error]));
+    }
+  }
+
+  static async reset_password(req: express.Request, res: express.Response) {
+    try {
+      const { token, password } = req.body;
+
+      const request = await authService.resetPassword(token, password);
+      logger.info(request);
+      if (request) {
+        res
+          .status(201)
+          .json(new ApiSuccess(201, "Password changed successfully!", request));
+      } else {
+        res.status(500).json(new ApiError(500, "Something went wrong!,", []));
+      }
+    } catch (error) {
+      res
+        .status(500)
+        .json(new ApiError(500, "Something went wrong!,", [error]));
+    }
+  }
+
   static async getUser(req: express.Request, res: express.Response) {
     const userId = req.params.id;
     try {

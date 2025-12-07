@@ -2,16 +2,18 @@ import express from "express";
 import { UserService } from "../../services/user.service";
 import JobController from "../../controllers/job.controller";
 import multer from "multer";
+import authMiddleware from "../../middleware/authMiddleware";
 
 const jobRouter = express.Router();
 
 const storage = multer.memoryStorage();
 const upload = multer({ storage });
 
-jobRouter.post("/", JobController.createJob);
-jobRouter.get("/", JobController.getJobs);
+jobRouter.post("/", authMiddleware, JobController.createJob);
+jobRouter.get("/", authMiddleware, JobController.getJobs);
 jobRouter.post(
   "/submit-resume",
+  authMiddleware,
   upload.fields([
     {
       name: "CV",
@@ -20,9 +22,13 @@ jobRouter.post(
   ]),
   JobController.submitResume
 );
-jobRouter.post("/create-interview", JobController.interviewApplicant);
+jobRouter.post(
+  "/create-interview",
+  authMiddleware,
+  JobController.interviewApplicant
+);
 jobRouter.get("/:id", JobController.getJob);
-jobRouter.patch("/:id", JobController.updateJob);
+jobRouter.patch("/:id",authMiddleware, JobController.updateJob);
 jobRouter.get("/resume/:id", JobController.getSubmittedResume);
 jobRouter.get("/company/:id", JobController.getCompanyJobs);
 jobRouter.get("/ai-recommedation/:id", JobController.getAIrecoomendation);

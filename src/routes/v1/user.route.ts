@@ -11,6 +11,11 @@ const userRouter = express.Router();
 userRouter.post("/", UserController.createUser);
 userRouter.post("/login", UserController.login);
 userRouter.post("/google-oauth", UserController.google_oauth);
+userRouter.post(
+  "/reset-password-request",
+  UserController.reset_password_request
+);
+userRouter.post("/reset-password", UserController.reset_password);
 userRouter.get("/", UserController.getUsers);
 userRouter.get("/companies", UserController.getCompanies);
 userRouter.post(
