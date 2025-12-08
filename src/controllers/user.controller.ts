@@ -94,19 +94,34 @@ class UserController {
     }
   }
 
-    static async verify(
-    req: express.Request,
-    res: express.Response
-  ) {
+  static async verifyEmail(req: express.Request, res: express.Response) {
     try {
       const { token } = req.body;
 
-      const request = await authService.verifyEmail(token);
+      const request = await authService.verifyEmail(token as string);
       logger.info(request);
       if (request) {
         res
           .status(201)
-          .json(new ApiSuccess(201, "Request successfully", request));
+          .json(new ApiSuccess(201, "Verification successfully", request));
+      } else {
+        res.status(500).json(new ApiError(500, "Something went wrong!,", []));
+      }
+    } catch (error) {
+      res
+        .status(500)
+        .json(new ApiError(500, "Something went wrong!,", [error]));
+    }
+  }
+
+    static async verifyAllEmails(req: express.Request, res: express.Response) {
+    try {
+      const request = await authService.verifyAllEmails();
+      logger.info(request);
+      if (request) {
+        res
+          .status(201)
+          .json(new ApiSuccess(201, "All users verification successfully", request));
       } else {
         res.status(500).json(new ApiError(500, "Something went wrong!,", []));
       }

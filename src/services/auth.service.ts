@@ -78,6 +78,7 @@ export class AuthService {
           verificationToken: token,
         },
       });
+      logger.info("User Token:" + userToken);
 
       const data = {
         emailVerified: new Date(),
@@ -86,6 +87,28 @@ export class AuthService {
 
       const user = await userRepository.update(userToken?.id!, data);
       return user;
+    } catch (error) {
+      logger.error(error);
+      return null;
+    }
+  }
+
+  async verifyAllEmails() {
+    try {
+      const users = await userRepository.findAll(undefined, "user");
+      const data = {
+        emailVerified: new Date(),
+        verificationToken: null,
+      } satisfies Prisma.UserUpdateInput;
+
+      let results = [];
+
+      for (const user of users) {
+        const verified = await userRepository.update(user?.id, data);
+        logger.info(verified);
+        results.push(verified);
+      }
+      return results;
     } catch (error) {
       logger.error(error);
       return null;
@@ -103,6 +126,10 @@ export class AuthService {
         email,
         "userExists"
       );
+
+      if (!user?.emailVerified) {
+        throw new Error("Email is not verified!");
+      }
 
       if (!user) {
         throw new Error("This User does not exist.");

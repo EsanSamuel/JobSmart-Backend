@@ -15,6 +15,8 @@ userRouter.post(
   "/reset-password-request",
   UserController.reset_password_request
 );
+userRouter.post("/verify-email", UserController.verifyEmail);
+userRouter.post("/verify-all-emails", UserController.verifyAllEmails);
 userRouter.post("/reset-password", UserController.reset_password);
 userRouter.get("/", UserController.getUsers);
 userRouter.get("/companies", UserController.getCompanies);
