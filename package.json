@@ -5,7 +5,10 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "nodemon"
+    "build": "prisma generate && tsc && npm run copy-prisma",
+    "copy-prisma": "cp -r src/generated dist/generated",
+    "start": "node dist/index.js",
+    "dev": "nodemon"
   },
   "keywords": [],
   "author": "",

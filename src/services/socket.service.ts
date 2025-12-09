@@ -114,8 +114,8 @@ io.on("connection", (socket) => {
 
       // Update user count
       const socketsInRoom = await io.in(roomId).fetchSockets();
-      io.to(roomId).emit("roomInfo", {
-        userCount: socketsInRoom.length,
+      io.to(roomId).emit("userCounts", {
+        user_counts: socketsInRoom.length,
       });
     }
 
