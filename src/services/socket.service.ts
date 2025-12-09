@@ -3,6 +3,7 @@ import { io } from "../index";
 import logger from "../utils/logger";
 import { Repository } from "../repository/base/repository";
 import { Message, Prisma } from "../generated/prisma/client";
+import prisma from "../config/prisma"
 
 const messageRepository = new Repository<Message>(prisma?.message);
 

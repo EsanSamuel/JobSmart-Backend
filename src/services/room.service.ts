@@ -1,6 +1,7 @@
 import { Prisma, Room } from "../generated/prisma/client";
 import { Repository } from "../repository/base/repository";
 import logger from "../utils/logger";
+import prisma from "../config/prisma"
 
 const roomRepository = new Repository<Room>(prisma?.room);
 

@@ -8,6 +8,7 @@ import { AnalyzeMatch } from "../ai/gemini";
 import { matchJobEvents, MatchJobQueue } from "../queue/matchjob.queue";
 import { QueueEvents } from "bullmq";
 import { bullRedis } from "../config/bullmq-redis";
+import prisma from "../config/prisma"
 
 const jobRepository = new Repository<Job>(prisma?.job);
 const userRepository = new Repository<User & { Resume: Resume[] }>(
