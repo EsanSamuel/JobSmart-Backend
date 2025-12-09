@@ -5,7 +5,7 @@ const resend = new Resend(process.env.RESEND_API_KEY);
 
 export const sendVerificationEmail = async (email: string, token: string) => {
   try {
-    const url = `http://localhost:3000/verify-email?token=${token}`;
+    const url = `https://jobsmart-two.vercel.app//verify-email?token=${token}`;
 
     const { data, error } = await resend.emails.send({
       from: "JobSmart <noreply@mikaelsoninitiative.org>",
