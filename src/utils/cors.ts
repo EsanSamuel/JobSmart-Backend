@@ -1,4 +1,8 @@
-const allowedOrigins = ["http://localhost:3000", "http://localhost:3001"];
+const allowedOrigins = [
+  "http://localhost:3000",
+  "http://localhost:3001",
+  "https://jobsmart-two.vercel.app",
+];
 
 const corsOptions = {
   origin: (origin: string | undefined, callback: any) => {
