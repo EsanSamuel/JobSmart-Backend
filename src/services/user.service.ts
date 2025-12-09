@@ -5,11 +5,13 @@ import logger from "../utils/logger";
 import { getPresignedUrl } from "../libs/aws";
 import { CVParser } from "../libs/pdf-parser";
 import { getEmbedding } from "../ai/gemini";
+import RedisService from "./redis.service";
 
 const userRepository = new Repository<User & { Resume: Resume[] }>(
   prisma?.user
 );
 const resumeRepository = new Repository<Resume>(prisma?.resume);
+const redisService = new RedisService()
 
 export class UserService {
   async createUser(data: any) {
@@ -45,6 +47,7 @@ export class UserService {
     orderBy?: "asc" | "desc";
   }) {
     try {
+      await redisService.flushdb()
       const accounts = await userRepository.findAll(undefined, "user", params);
 
       const users = accounts.filter((account) => account.role === "USER");

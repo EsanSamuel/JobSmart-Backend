@@ -1,14 +1,15 @@
 import { createTransporter } from "../config/nodemailer";
 import logger from "../utils/logger";
+import { Resend } from "resend";
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 export const sendResetEmail = async (email: string, token: string) => {
   try {
     const url = `http://localhost:3000/reset-password?token=${token}`;
-    const transporter = await createTransporter();
-    const info = await transporter.sendMail({
-      from: "noreply@jobsmart.com",
+    const { data, error } = await resend.emails.send({
+      from: "JobSmart <noreply@mikaelsoninitiative.org>",
       to: email,
-      subject: "Reset your Password",
+      subject: "Reset your password",
       html: `
   <div style="max-width: 500px; margin: 0 auto; font-family: Arial, sans-serif; background-color: #ffffff; padding: 30px; border-radius: 8px; border: 1px solid #e5e7eb;">
 
@@ -48,8 +49,13 @@ export const sendResetEmail = async (email: string, token: string) => {
 `,
     });
 
-    logger.info("Message sent:" + info.messageId);
+    if (error) {
+      logger.error("Resend error:" + error);
+      return;
+    }
+
+    logger.info("Message sent via Resend:" + data?.id);
   } catch (error) {
-    logger.info(error);
+    logger.error("Failed to send email:" + error);
   }
 };
