@@ -30,6 +30,16 @@ userRouter.post(
   ]),
   UserController.uploadResume
 );
+userRouter.post(
+  "/profile-image",
+  upload.fields([
+    {
+      name: "file",
+      maxCount: 1,
+    },
+  ]),
+  UserController.uploadProfileImage
+);
 userRouter.get("/:id", UserController.getUser);
 userRouter.patch("/:id", UserController.updateUser);
 userRouter.get("/applied-jobs/:id", UserController.appliedJobs);

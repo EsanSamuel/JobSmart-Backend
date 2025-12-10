@@ -114,14 +114,16 @@ class UserController {
     }
   }
 
-    static async verifyAllEmails(req: express.Request, res: express.Response) {
+  static async verifyAllEmails(req: express.Request, res: express.Response) {
     try {
       const request = await authService.verifyAllEmails();
       logger.info(request);
       if (request) {
         res
           .status(201)
-          .json(new ApiSuccess(201, "All users verification successfully", request));
+          .json(
+            new ApiSuccess(201, "All users verification successfully", request)
+          );
       } else {
         res.status(500).json(new ApiError(500, "Something went wrong!,", []));
       }
@@ -267,6 +269,39 @@ class UserController {
                 []
               )
             );
+        }
+      }
+    } catch (error) {
+      res
+        .status(500)
+        .json(new ApiError(500, "Something went wrong!,", [error]));
+    }
+  }
+
+  static async uploadProfileImage(req: express.Request, res: express.Response) {
+    try {
+      const { userId } = req.body;
+      const files = req.files as {
+        file: Express.Multer.File[];
+      };
+
+      if (files.file?.[0]) {
+        const profile = await userService.updateProfileImage(userId, files.file[0]);
+        logger.info(profile);
+        if (profile) {
+          res
+            .status(201)
+            .json(
+              new ApiSuccess(
+                201,
+                "Profile picture uploaded successfully",
+                profile
+              )
+            );
+        } else {
+          res
+            .status(500)
+            .json(new ApiError(500, "Something went wrong!,", []));
         }
       }
     } catch (error) {

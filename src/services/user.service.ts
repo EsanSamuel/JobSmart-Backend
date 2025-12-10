@@ -91,13 +91,14 @@ export class UserService {
     }
   }
 
-  async updateProfileImage(file: Express.Multer.File, userId: string) {
+  async updateProfileImage(userId: string, file: Express.Multer.File) {
     try {
       const fileUrl = await getPresignedUrl(file);
       const data = {
         profileImage: fileUrl as string,
       } satisfies Prisma.UserUpdateInput;
       const profile = await userRepository.update(userId, data);
+      return profile
     } catch (error) {
       logger.error("Error updating user profileimage" + error);
     }
