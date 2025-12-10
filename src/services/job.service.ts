@@ -301,8 +301,9 @@ export class JobService {
         })
         .sort((a, b) => b.matchScore - a.matchScore)
         .slice(0, 10);
+        logger.info(rankedJobs)
 
-      const filterJobs = rankedJobs.filter((job) => job.matchScore >= 70);
+      const filterJobs = rankedJobs.filter((job) => job.matchScore >= 60);
 
       logger.info(
         `Top recommendations for ${userId}: ${filterJobs.length} found`

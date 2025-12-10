@@ -11,7 +11,7 @@ const userRepository = new Repository<User & { Resume: Resume[] }>(
   prisma?.user
 );
 const resumeRepository = new Repository<Resume>(prisma?.resume);
-const redisService = new RedisService()
+const redisService = new RedisService();
 
 export class UserService {
   async createUser(data: any) {
@@ -47,7 +47,7 @@ export class UserService {
     orderBy?: "asc" | "desc";
   }) {
     try {
-      await redisService.flushdb()
+      await redisService.flushdb();
       const accounts = await userRepository.findAll(undefined, "user", params);
 
       const users = accounts.filter((account) => account.role === "USER");
@@ -88,6 +88,18 @@ export class UserService {
       }
     } catch (error) {
       logger.error("Error fetching user" + error);
+    }
+  }
+
+  async updateProfileImage(file: Express.Multer.File, userId: string) {
+    try {
+      const fileUrl = await getPresignedUrl(file);
+      const data = {
+        profileImage: fileUrl as string,
+      } satisfies Prisma.UserUpdateInput;
+      const profile = await userRepository.update(userId, data);
+    } catch (error) {
+      logger.error("Error updating user profileimage" + error);
     }
   }
 
