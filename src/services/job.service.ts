@@ -138,6 +138,14 @@ export class JobService {
     }
   }
 
+  async deleteJob(jobId: string) {
+    try {
+      await jobRepository.delete(jobId);
+    } catch (error) {
+      logger.error("Error closing job" + error);
+    }
+  }
+
   async closeJob(jobId: string) {
     try {
       const close = await jobRepository.update(jobId, {
@@ -301,7 +309,7 @@ export class JobService {
         })
         .sort((a, b) => b.matchScore - a.matchScore)
         .slice(0, 10);
-        logger.info(rankedJobs)
+      logger.info(rankedJobs);
 
       const filterJobs = rankedJobs.filter((job) => job.matchScore >= 60);
 

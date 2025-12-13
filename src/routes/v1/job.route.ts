@@ -28,7 +28,8 @@ jobRouter.post(
   JobController.interviewApplicant
 );
 jobRouter.get("/:id", JobController.getJob);
-jobRouter.patch("/:id",authMiddleware, JobController.updateJob);
+jobRouter.patch("/:id", authMiddleware, JobController.updateJob);
+jobRouter.delete("/:id", authMiddleware, JobController.deleteJob);
 jobRouter.get("/resume/:id", JobController.getSubmittedResume);
 jobRouter.get("/company/:id", JobController.getCompanyJobs);
 jobRouter.get("/ai-recommedation/:id", JobController.getAIrecoomendation);

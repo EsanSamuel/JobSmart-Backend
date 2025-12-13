@@ -188,6 +188,21 @@ class JobController {
     }
   }
 
+  static async deleteJob(req: express.Request, res: express.Response) {
+    try {
+      const jobId = req.params.id;
+      const job = await jobService.deleteJob(jobId);
+
+      res
+        .status(200)
+        .json(new ApiSuccess(200, "Job deleted successfully", job));
+    } catch (error) {
+      res
+        .status(500)
+        .json(new ApiError(500, "Something went wrong!,", [error]));
+    }
+  }
+
   static async updateJob(req: express.Request, res: express.Response) {
     try {
       const jobId = req.params.id;
