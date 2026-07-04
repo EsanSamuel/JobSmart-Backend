@@ -81,10 +81,10 @@ export class JobService {
           } satisfies Prisma.JobUpdateInput);
         }
       }
-      if (jobs) {
+     /* if (jobs) {
         await redisService.set(cachedKey, jobs, 600);
         return jobs as Job[];
-      }
+      }*/
     } catch (error) {
       logger.error("Error creating job" + error);
     }
@@ -113,10 +113,10 @@ export class JobService {
         return cachedJobs as Job[];
       }*/
       const jobs = await jobRepository.findAll(userId, "recruiterJob", params);
-      if (jobs) {
+      /*if (jobs) {
         await redisService.set(cachedKey, jobs, 600);
         return jobs as Job[];
-      }
+      }*/
     } catch (error) {
       logger.error("Error creating job" + error);
     }
