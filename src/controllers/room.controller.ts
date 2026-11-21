@@ -2,7 +2,6 @@ import express from "express";
 import { ApiError, ApiSuccess } from "../utils/response";
 import { Prisma } from "../generated/prisma/client";
 import { UserService } from "../services/user.service";
-import logger from "../utils/logger";
 import { getPresignedUrl } from "../libs/aws";
 import { CVParser } from "../libs/pdf-parser";
 import { AuthService } from "../services/auth.service";
@@ -21,7 +20,6 @@ class RoomController {
       };
 
       const room = await roomService.createRoom(data);
-      logger.info(room);
       if (room) {
         res
           .status(201)

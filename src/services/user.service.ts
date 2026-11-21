@@ -5,23 +5,18 @@ import logger from "../utils/logger";
 import { getPresignedUrl } from "../libs/aws";
 import { CVParser } from "../libs/pdf-parser";
 import { getEmbedding } from "../ai/gemini";
-import RedisService from "./redis.service";
 
 const userRepository = new Repository<User & { Resume: Resume[] }>(
   prisma?.user
 );
 const resumeRepository = new Repository<Resume>(prisma?.resume);
-const redisService = new RedisService();
 
 export class UserService {
   async createUser(data: any) {
     try {
       const user = await userRepository.create(data);
-      logger.info(user);
       if (user) {
         return user as User;
-      } else {
-        logger.info("Error creating user");
       }
     } catch (error) {
       logger.error("Error creating user" + error);
@@ -32,7 +27,6 @@ export class UserService {
     try {
       const user = await userRepository.findById(userId, undefined, "user");
       if (user) {
-        console.log(user);
         return user as User;
       }
     } catch (error) {
@@ -47,7 +41,6 @@ export class UserService {
     orderBy?: "asc" | "desc";
   }) {
     try {
-      await redisService.flushdb();
       const accounts = await userRepository.findAll(undefined, "user", params);
 
       const users = accounts.filter((account) => account.role === "USER");
@@ -117,7 +110,6 @@ export class UserService {
       } satisfies Prisma.UserUpdateInput;
 
       const profile = await userRepository.update(user?.id as string, data);
-      logger.info(profile);
       if (profile) {
         const data = {
           embedding: embedContent,
@@ -126,7 +118,6 @@ export class UserService {
           user?.Resume?.[0]?.id as string,
           data
         );
-        console.log(updateResumeEmbedding);
         return profile as User;
       } else {
         logger.error("Error updating user profile");
@@ -144,7 +135,6 @@ export class UserService {
         "resume"
       );
       if (hasUserUploaded) {
-        logger.info("This user has already uploaded a resume");
         return;
       }
 

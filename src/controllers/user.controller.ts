@@ -2,7 +2,6 @@ import express from "express";
 import { ApiError, ApiSuccess } from "../utils/response";
 import { Prisma } from "../generated/prisma/client";
 import { UserService } from "../services/user.service";
-import logger from "../utils/logger";
 import { getPresignedUrl } from "../libs/aws";
 import { CVParser } from "../libs/pdf-parser";
 import { AuthService } from "../services/auth.service";
@@ -16,7 +15,6 @@ class UserController {
       const { username, email, password, role } = req.body;
 
       const user = await authService.register(username, email, password, role);
-      logger.info(user);
       if (user) {
         res
           .status(201)
@@ -36,7 +34,6 @@ class UserController {
       const { email, password } = req.body;
 
       const user = await authService.login(email, password);
-      logger.info(user);
       if (user) {
         res
           .status(201)
@@ -56,7 +53,6 @@ class UserController {
       const { username, email, image, role } = req.body;
 
       const user = await authService.google_oauth(username, email, image, role);
-      logger.info(user);
       if (user) {
         res
           .status(201)
@@ -79,7 +75,6 @@ class UserController {
       const { email } = req.body;
 
       const request = await authService.resetPasswordRequest(email);
-      logger.info(request);
       if (request) {
         res
           .status(201)
@@ -99,7 +94,6 @@ class UserController {
       const { token } = req.body;
 
       const request = await authService.verifyEmail(token as string);
-      logger.info(request);
       if (request) {
         res
           .status(201)
@@ -117,7 +111,6 @@ class UserController {
   static async verifyAllEmails(req: express.Request, res: express.Response) {
     try {
       const request = await authService.verifyAllEmails();
-      logger.info(request);
       if (request) {
         res
           .status(201)
@@ -139,7 +132,6 @@ class UserController {
       const { token, password } = req.body;
 
       const request = await authService.resetPassword(token, password);
-      logger.info(request);
       if (request) {
         res
           .status(201)
@@ -230,7 +222,6 @@ class UserController {
       const { skills } = req.body;
 
       const user = await userService.updateProfile(authId, skills);
-      logger.info(user);
       if (user) {
         res
           .status(201)
@@ -254,7 +245,6 @@ class UserController {
 
       if (files.CV?.[0]) {
         const resume = await userService.uploadResume(authId, files.CV[0]);
-        logger.info(resume);
         if (resume) {
           res
             .status(201)
@@ -287,7 +277,6 @@ class UserController {
 
       if (files.file?.[0]) {
         const profile = await userService.updateProfileImage(userId, files.file[0]);
-        logger.info(profile);
         if (profile) {
           res
             .status(201)
@@ -316,7 +305,6 @@ class UserController {
       const authId = req.params.id;
 
       const resume = await userService.appliedJobs(authId);
-      logger.info(resume);
       if (resume) {
         res
           .status(201)

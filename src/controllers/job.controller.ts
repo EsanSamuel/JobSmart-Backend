@@ -2,7 +2,6 @@ import express from "express";
 import { ApiError, ApiSuccess } from "../utils/response";
 import { Prisma } from "../generated/prisma/client";
 import { UserService } from "../services/user.service";
-import logger from "../utils/logger";
 import { JobService } from "../services/job.service";
 import { isRecruiter } from "../middleware/authorizeRole";
 import { getEmbedding } from "../ai/gemini";
@@ -51,7 +50,6 @@ class JobController {
       } satisfies Prisma.JobCreateInput;
 
       const job = await jobService.createJob(data, authId);
-      logger.info(job);
       if (job) {
         res
           .status(201)
@@ -230,7 +228,6 @@ class JobController {
       } satisfies Prisma.JobUpdateInput;
 
       const job = await jobService.updateJob(jobId, data);
-      logger.info(job);
       if (job) {
         res
           .status(201)
@@ -262,7 +259,6 @@ class JobController {
           jobId,
           files.CV[0]
         );
-        logger.info(resume);
         if (resume) {
           res
             .status(201)

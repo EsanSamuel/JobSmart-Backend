@@ -10,18 +10,11 @@ import prisma from "../config/prisma";
 import logger from "../utils/logger";
 import { getPresignedUrl } from "../libs/aws";
 import { CVParser } from "../libs/pdf-parser";
-import { AnalyzeMatch } from "../ai/gemini";
-import { MatchJobQueue } from "../queue/matchjob.queue";
 import {
   matchResumeEvents,
   MatchResumeQueue,
 } from "../queue/matchresume.queue";
-import { QueueEvents } from "bullmq";
-import { bullRedis } from "../config/bullmq-redis";
 import { cosineSimilarity } from "../utils/cosineSimilarity";
-import { classicNameResolver } from "typescript";
-import RedisService from "./redis.service";
-import crypto from "crypto";
 
 const jobRepository = new Repository<Job & { Resume: Resume[] }>(prisma?.job);
 const userRepository = new Repository<
@@ -31,7 +24,6 @@ const resumeRepository = new Repository<Resume & { user: User }[]>(
   prisma?.resume
 );
 const interviewRepository = new Repository<Interview>(prisma.interview);
-const redisService = new RedisService();
 
 export class JobService {
   async createJob(data: any, authId: string) {
@@ -43,10 +35,7 @@ export class JobService {
       );
       if (user?.role === "COMPANY") {
         const job = await jobRepository.create(data);
-        logger.info(job);
         return job as Job;
-      } else {
-        logger.info("Only companies can list jobs");
       }
     } catch (error) {
       logger.error("Error creating job" + error);
@@ -65,13 +54,6 @@ export class JobService {
     orderBy?: "asc" | "desc";
   }) {
     try {
-      const paramsString = JSON.stringify(params || {});
-      const key = crypto.createHash("md5").update(paramsString).digest("hex");
-      const cachedKey = `jobs:${key}`;
-      const cachedJobs = await redisService.get(cachedKey);
-      /*if (cachedJobs) {
-        return cachedJobs as Job[];
-      }*/
       const jobs = await jobRepository.findAll(undefined, "job", params);
 
       for (const job of jobs) {
@@ -82,7 +64,6 @@ export class JobService {
         }
       }
       if (jobs) {
-        /*await redisService.set(cachedKey, jobs, 600);*/
         return jobs as Job[];
       }
     } catch (error) {
@@ -105,16 +86,8 @@ export class JobService {
     }
   ) {
     try {
-      const paramsString = JSON.stringify(params || {});
-      const key = crypto.createHash("md5").update(paramsString).digest("hex");
-      const cachedKey = `companyJobs:${key}`;
-      const cachedJobs = await redisService.get(cachedKey);
-      /*if (cachedJobs) {
-        return cachedJobs as Job[];
-      }*/
       const jobs = await jobRepository.findAll(userId, "recruiterJob", params);
       if (jobs) {
-       /* await redisService.set(cachedKey, jobs, 600);*/
         return jobs as Job[];
       }
     } catch (error) {
@@ -124,11 +97,6 @@ export class JobService {
 
   async getJob(id: string) {
     try {
-      const key = `job:${id}`;
-      const cachedJob = await redisService.get(key);
-      if (cachedJob) {
-        return cachedJob as Job;
-      }
       const job = await jobRepository.findById(id, undefined, "job");
       if (job) {
         return job as Job;
@@ -177,9 +145,7 @@ export class JobService {
         jobId,
         "submitResume"
       );
-      logger.info(hasUserUploaded);
       if (hasUserUploaded) {
-        logger.info("This user has already submitted a resume to this job");
         return;
       }
 
@@ -213,27 +179,19 @@ export class JobService {
 
   async getSubmittedResume(jobId: string) {
     try {
-      const key = `Resume:${jobId}`;
-      /*const cachedResumes = await redisService.get(key);
-      if (cachedResumes) {
-        return cachedResumes;
-      }*/
       const resumes = await resumeRepository.findAll(jobId, "submittedResume");
 
       if (!resumes || resumes.length === 0) {
-        logger.info("No resume found!");
         return [];
       }
 
-      const resume = await MatchResumeQueue.add("match_resume", {
-        jobId,
-        resumes,
-      });
+      const resume = await MatchResumeQueue.add("match_resume", { jobId });
 
-      const result = (await resume.waitUntilFinished(
-        matchResumeEvents
+      await resume.waitUntilFinished(matchResumeEvents);
+      const result = (await resumeRepository.findAll(
+        jobId,
+        "submittedResume"
       )) as Resume[];
-      await MatchResumeQueue.close();
 
       const filterResumeByAIscore = result
         .filter((resume) => resume.matchPercentage !== null)
@@ -241,7 +199,6 @@ export class JobService {
           (a: Resume, b: Resume) =>
             (b.matchPercentage ?? 0) - (a.matchPercentage ?? 0)
         ) as any;
-      logger.info(filterResumeByAIscore);
 
       const resultsWithMatchPercentage = result.filter(
         (resume) => resume.matchPercentage !== null
@@ -256,18 +213,6 @@ export class JobService {
       );
       const UnlikelyFits = resultsWithMatchPercentage.filter(
         (resume) => (resume?.matchPercentage ?? 0) < 50
-      );
-
-      await redisService.set(
-        key,
-        {
-          result,
-          filterResumeByAIscore,
-          PotentialFits,
-          BestFits,
-          UnlikelyFits,
-        },
-        600
       );
 
       return {
@@ -309,19 +254,7 @@ export class JobService {
         })
         .sort((a, b) => b.matchScore - a.matchScore)
         .slice(0, 10);
-      logger.info(rankedJobs);
-
       const filterJobs = rankedJobs.filter((job) => job.matchScore >= 60);
-
-      logger.info(
-        `Top recommendations for ${userId}: ${filterJobs.length} found`
-      );
-
-      filterJobs.forEach((job, index) => {
-        logger.info(
-          `${index + 1}. ${job.title} at ${job.company} - ${job.matchScore}%`
-        );
-      });
 
       return filterJobs;
     } catch (error) {

@@ -8,7 +8,6 @@ import prisma from "../config/prisma"
 const messageRepository = new Repository<Message>(prisma?.message);
 
 io.on("connection", (socket) => {
-  logger.info("User connected!");
 
   socket.on("joinRoom", async (data) => {
     const { userId, roomId, username } = data;
@@ -18,7 +17,6 @@ io.on("connection", (socket) => {
       socket.data.userId = userId;
       socket.data.roomId = roomId;
 
-      logger.info(`${username} joined ${roomId}`);
 
       // Broadcast to users that someone joined the room
       socket.to(roomId).emit("user_joined", {
@@ -33,7 +31,7 @@ io.on("connection", (socket) => {
         user_counts: socketInRooms.length,
       });
     } catch (error) {
-      logger.info(`Something went wrong with "joinRoom" socket: ${error}`);
+      logger.error(`Something went wrong with "joinRoom" socket: ${error}`);
       socket.emit("error", { message: "Failed to join room" });
     }
   });
@@ -57,7 +55,6 @@ io.on("connection", (socket) => {
       } satisfies Prisma.MessageCreateInput;
 
       const newMessage = await messageRepository.create(messagePayloadData);
-      logger.info(newMessage)
 
       io.to(roomId).emit("newMessages", {
         id: newMessage?.id,
@@ -67,9 +64,8 @@ io.on("connection", (socket) => {
         roomId: newMessage?.roomId,
       });
 
-      logger.info(`Message broadcast to roomm: ${roomId}`);
     } catch (error) {
-      logger.info(`Something went wrong with "sendMmessage" socket: ${error}`);
+      logger.error(`Something went wrong with "sendMmessage" socket: ${error}`);
       socket.emit("error", { message: "Failed to send message" });
     }
   });
@@ -98,7 +94,7 @@ io.on("connection", (socket) => {
         io.to(roomId).emit("messageDeleted", { messageId });
       }
     } catch (error) {
-      logger.info(`Something went wrong with "deleteMessage" socket: ${error}`);
+      logger.error(`Something went wrong with "deleteMessage" socket: ${error}`);
       socket.emit("error", { message: "Failed to delete message" });
     }
   });
@@ -120,6 +116,5 @@ io.on("connection", (socket) => {
       });
     }
 
-    console.log("User disconnected:", socket.id);
   });
 });

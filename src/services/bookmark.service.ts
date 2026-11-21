@@ -2,47 +2,32 @@ import { Bookmark } from "../generated/prisma/client";
 import { Repository } from "../repository/base/repository";
 import prisma from "../config/prisma";
 import logger from "../utils/logger";
-import RedisService from "./redis.service";
 
 const bookmarkRepository = new Repository<Bookmark>(prisma?.bookmark);
-const redisService = new RedisService();
 
 export class BookmarkService {
   async addJobToBookmark(data: any, jobId: string, userId: string) {
     try {
-      const isBookmarked = await bookmarkRepository.findFirst(
-        jobId,
-        userId,
-        "bookmark"
-      );
-      if (isBookmarked) {
-        logger.info("This job has been bookmarked");
-        return;
-      }
+      const isBookmarked = await prisma.bookmark.findFirst({
+        where: { jobId, userId },
+        include: { job: true },
+      });
+      if (isBookmarked) return isBookmarked;
       const bookmark = await bookmarkRepository.create(data);
-      if (bookmark) {
-        logger.info(bookmark);
-        return bookmark as Bookmark;
-      }
+      return bookmark as Bookmark;
     } catch (error) {
-      logger.error("Something went wrong with adding job to bookmark!");
+      logger.error({ err: error }, "Unable to add job bookmark");
+      throw error;
     }
   }
 
   async getUserBookmarks(userId: string) {
     try {
-      const key = `userBookmarks:${userId}`;
-      const cachedUserBookmarks = await redisService.get(key);
-      if (cachedUserBookmarks) {
-        return cachedUserBookmarks;
-      }
       const bookmarks = await bookmarkRepository.findAll(userId, "bookmark");
-      if (bookmarks) {
-        await redisService.set(key, bookmarks, 600);
-        return bookmarks as Bookmark[];
-      }
+      return (bookmarks ?? []) as Bookmark[];
     } catch (error) {
-      logger.error("Something went wrong with fetching user bookmarks!");
+      logger.error({ err: error }, "Unable to fetch user bookmarks");
+      throw error;
     }
   }
 
@@ -52,11 +37,10 @@ export class BookmarkService {
         jobId,
         "bookmarkedJobs"
       );
-      if (bookmarks) {
-        return bookmarks as Bookmark[];
-      }
+      return (bookmarks ?? []) as Bookmark[];
     } catch (error) {
-      logger.error("Something went wrong with fetching user bookmarks!");
+      logger.error({ err: error }, "Unable to fetch bookmarks for job");
+      throw error;
     }
   }
 
@@ -72,10 +56,11 @@ export class BookmarkService {
   }
 
   async deleteBookmark(id: string) {
-    await bookmarkRepository.delete(id);
     try {
+      return await bookmarkRepository.delete(id);
     } catch (error) {
-      logger.error("Something went wrong with deleting bookmark!");
+      logger.error({ err: error }, "Unable to delete bookmark");
+      throw error;
     }
   }
 }

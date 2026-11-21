@@ -34,7 +34,6 @@ export const matchJobWorker = new Worker<MatchJobInterface>(
     const { jobId, userId, CVurl, resumeId } = job.data;
     const pdfWithUUID = CVurl.split("/").pop();
     const pdfName = pdfWithUUID?.split("=")[1];
-    logger.info(pdfName);
 
     try {
       if (!resumeId) {
@@ -45,10 +44,6 @@ export const matchJobWorker = new Worker<MatchJobInterface>(
           pdfName
         );
         if (existingMatchInDB) {
-          logger.info(
-            "Match already exist for this user and this job, returning from DB...."
-          );
-          //logger.info(existingMatchInDB);
           return existingMatchInDB;
         }
         const job = await jobRepository.findById(jobId, undefined, "job");
@@ -100,7 +95,6 @@ export const matchJobWorker = new Worker<MatchJobInterface>(
         }
         const cleaned = analyzeMatch?.replace(/```json|```/g, "").trim();
         const parsedResponse = JSON.parse(cleaned as string);
-        logger.info(parsedResponse);
 
         const matched_percentage = parsedResponse.match_percentage;
         const matched_skills = parsedResponse.matched_skills;
@@ -126,7 +120,6 @@ export const matchJobWorker = new Worker<MatchJobInterface>(
         } satisfies Prisma.MatchCreateInput;
 
         const saveMatchingToDB = await matchRepository.create(data);
-        logger.info(saveMatchingToDB);
         return saveMatchingToDB;
       } else if (resumeId) {
         const existingMatchInDB = await matchRepository.findFirst(
@@ -136,10 +129,6 @@ export const matchJobWorker = new Worker<MatchJobInterface>(
           pdfName
         );
         if (existingMatchInDB) {
-          logger.info(
-            "Match already exist for this user and this job, returning from DB...."
-          );
-          logger.info(existingMatchInDB);
           return existingMatchInDB;
         }
         const user = await userRepository.findById(userId, undefined, "user");
@@ -148,7 +137,6 @@ export const matchJobWorker = new Worker<MatchJobInterface>(
         );
 
         const parsedText = userResume?.[0]?.parsedText;
-        logger.info(parsedText);
         const job = await jobRepository.findById(jobId, undefined, "job");
         const prompt = `
               You are an expert career analyst and recruiter.
@@ -197,7 +185,6 @@ export const matchJobWorker = new Worker<MatchJobInterface>(
         }
         const cleaned = analyzeMatch?.replace(/```json|```/g, "").trim();
         const parsedResponse = JSON.parse(cleaned as string);
-        logger.info(parsedResponse);
 
         const matched_percentage = parsedResponse.match_percentage;
         const matched_skills = parsedResponse.matched_skills;
@@ -223,24 +210,11 @@ export const matchJobWorker = new Worker<MatchJobInterface>(
         } satisfies Prisma.MatchCreateInput;
 
         const saveMatchingToDB = await matchRepository.create(data);
-        logger.info(saveMatchingToDB);
         return saveMatchingToDB;
       }
     } catch (error) {
       logger.error("Something went wrong with matching job" + error);
     }
   },
-  { connection: bullRedis, concurrency: 5 }
+  { connection: bullRedis, concurrency: 5, autorun: false }
 );
-
-matchJobWorker.on("active", (job) => {
-  console.log(`🚀 Processing job ${job.id}`);
-});
-
-matchJobWorker.on("completed", (job, result) => {
-  console.log(`✅ Job ${job.id} completed with result:`, result);
-});
-
-matchJobWorker.on("failed", (job, err) => {
-  console.error(`❌ Job ${job?.id} failed:`, err);
-});

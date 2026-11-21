@@ -26,22 +26,20 @@ const resumeRepository = new Repository<Resume & { user: User }[]>(
 
 interface MatchResumeInterface {
   jobId: string;
-  resumes: Resume[];
 }
 
 export const matchResumeWorker = new Worker<MatchResumeInterface>(
   "match_resume",
   async (jobs: Job<MatchResumeInterface>) => {
-    const { jobId, resumes } = jobs.data;
+    const { jobId } = jobs.data;
+    const resumes = await resumeRepository.findAll(jobId, "submittedResume");
+    if (!resumes?.length) return true;
+
     for (const resume of resumes) {
       if (resume.matchPercentage && resume.matchedSkills?.length > 0) {
-        logger.info(
-          `Skipping ${resume.userId} — already has match data (${resume.matchPercentage}%)`
-        );
         continue;
       }
       const parsedText = resume.parsedText;
-      logger.info(parsedText);
       const job = await jobRepository.findById(jobId, undefined, "job");
       const prompt = `
               You are an expert career analyst and recruiter.
@@ -88,7 +86,6 @@ export const matchResumeWorker = new Worker<MatchResumeInterface>(
       }
       const cleaned = analyzeMatch?.replace(/```json|```/g, "").trim();
       const parsedResponse = JSON.parse(cleaned as string);
-      logger.info(parsedResponse);
 
       const matched_percentage = parsedResponse.match_percentage;
       const matched_skills = parsedResponse.matched_skills;
@@ -104,23 +101,7 @@ export const matchResumeWorker = new Worker<MatchResumeInterface>(
 
       await resumeRepository.update(resume.id, data);
     }
-    const updatedResumes = await resumeRepository.findAll(
-      jobId,
-      "submittedResume"
-    );
-    return updatedResumes as Resume[];
+    return true;
   },
-  { connection: bullRedis, concurrency: 5 }
+  { connection: bullRedis, concurrency: 5, autorun: false }
 );
-
-matchResumeWorker.on("active", (resume) => {
-  console.log(`🚀 Processing resume ${resume.id}`);
-});
-
-matchResumeWorker.on("completed", (resume, result) => {
-  console.log(`✅ Resume ${resume.id} completed with result:`, result);
-});
-
-matchResumeWorker.on("failed", (resume, err) => {
-  console.error(`❌ Job ${resume?.id} failed:`, err);
-});

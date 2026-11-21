@@ -43,7 +43,6 @@ export class JobMatchService {
         );
 
         const result = await match.waitUntilFinished(matchJobEvents);
-        await MatchJobQueue.close();
         return result;
       } else if (resumeId) {
         const match = await MatchJobQueue.add(
@@ -64,7 +63,6 @@ export class JobMatchService {
         );
 
         const result = await match.waitUntilFinished(matchJobEvents);
-        await MatchJobQueue.close();
         return result;
       }
     } catch (error) {

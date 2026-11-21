@@ -1,7 +1,6 @@
 import express from "express";
 import { ApiError, ApiSuccess } from "../utils/response";
 import { JobMatchService } from "../services/match.service";
-import logger from "../utils/logger";
 import { MatchJobQueue } from "../queue/matchjob.queue";
 
 const matchService = new JobMatchService();
@@ -14,7 +13,6 @@ export class MatchController {
       const file = req.files as {
         CV?: Express.Multer.File[];
       };
-      logger.info(resumeId);
 
       if (file.CV?.[0]) {
         if (!resumeId) {

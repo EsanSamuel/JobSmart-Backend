@@ -14,11 +14,12 @@ import bookmarks from "./routes/v1/bookmark.route";
 import room from "./routes/v1/room.route";
 import { AnalyzeMatch, getEmbedding } from "./ai/gemini";
 import match from "./routes/v1/match.route";
-import "./workers/match-job.worker";
-import "./workers/submittedResume.worker";
-import "./config/redis";
+import { matchJobWorker } from "./workers/match-job.worker";
+import { matchResumeWorker } from "./workers/submittedResume.worker";
 import limiter from "./middleware/rate-limiter";
 import { Server, Socket } from "socket.io";
+import { matchJobQueueCleanup } from "./queue/matchjob.queue";
+import { matchResumeQueueCleanup } from "./queue/matchresume.queue";
 
 const app = express();
 const server = http.createServer(app);
@@ -64,4 +65,10 @@ const startServer = () => {
   server.listen(PORT, () => logger.info(`Server is running at PORT ${PORT}`));
 };
 
-startServer();
+void Promise.all([matchJobQueueCleanup, matchResumeQueueCleanup]).then(
+  () => {
+    void matchJobWorker.run();
+    void matchResumeWorker.run();
+    startServer();
+  }
+);

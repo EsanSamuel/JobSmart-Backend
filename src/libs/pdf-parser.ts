@@ -1,5 +1,4 @@
 import * as pdfjsLib from "pdfjs-dist/legacy/build/pdf";
-import logger from "../utils/logger";
 
 export async function CVParser(url: string): Promise<string> {
   try {
@@ -10,7 +9,6 @@ export async function CVParser(url: string): Promise<string> {
 
     let text = "";
     for (let i = 1; i <= pdf.numPages; i++) {
-      logger.info(`Parsing pdf page ${pdf.numPages}...`);
       const page = await pdf.getPage(i);
       const content = await page.getTextContent();
       text += content.items.map((item: any) => item.str).join(" ") + "\n\n";

@@ -22,14 +22,11 @@ export const getPresignedUrl = async (file: Express.Multer.File) => {
       Bucket: process.env.S3_BUCKET_NAME!,
     });
 
-    logger.info("Generating presignedUrl...");
     const presignedUrl = await getSignedUrl(s3, command, {
       expiresIn: 3600,
     });
-    logger.info(`Presigned Url generated: ${presignedUrl}`);
 
     const permanentUrl = `https://${process.env.S3_BUCKET_NAME}.t3.storage.dev/${uniqueKey}`;
-    logger.info(`File uploaded permanently: ${permanentUrl}`);
 
     const fileBuffer = file.buffer;
 

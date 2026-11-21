@@ -34,7 +34,7 @@ export class RoomService {
         return roomExists;
       }
     } catch (error) {
-      logger.info("Error Creating Room");
+      logger.error("Error Creating Room");
     }
   }
 
@@ -43,7 +43,7 @@ export class RoomService {
       const rooms = await roomRepository.findAll(userId, "rooms");
       return rooms;
     } catch (error) {
-      logger.info("Error getting Room");
+      logger.error("Error getting Room");
     }
   }
 
@@ -52,7 +52,7 @@ export class RoomService {
       const room = await roomRepository.findById(id, undefined, "room");
       return room;
     } catch (error) {
-      logger.info("Error getting Room");
+      logger.error("Error getting Room");
     }
   }
 }

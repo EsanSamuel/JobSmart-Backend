@@ -511,7 +511,6 @@ export class Repository<T> implements IRepository<T> {
         } satisfies Parameters<typeof prisma.user.findUnique>[0]) as Promise<T | null>;
 
       case "user":
-        logger.info(id);
         return this.prismaClient.user.findUnique({
           where: {
             id: id,
@@ -560,7 +559,6 @@ export class Repository<T> implements IRepository<T> {
         } satisfies Parameters<typeof prisma.bookmark.findUnique>[0]) as Promise<T | null>;
 
       case "room":
-        logger.info(id);
         return this.prismaClient.room.findUnique({
           where: {
             id: id,
@@ -572,7 +570,6 @@ export class Repository<T> implements IRepository<T> {
         } satisfies Parameters<typeof prisma.room.findUnique>[0]) as Promise<T | null>;
 
       case "message":
-        logger.info(id);
         return this.prismaClient.message.findUnique({
           where: {
             id: id,

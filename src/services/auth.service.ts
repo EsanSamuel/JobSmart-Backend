@@ -25,7 +25,6 @@ export class AuthService {
       if (!username || !email || !password) {
         throw new Error("No Credentials");
       }
-      logger.info(role);
       const uniqueName = email.split("@")[0];
 
       const userExists = await userRepository.findById(
@@ -58,7 +57,6 @@ export class AuthService {
         if (user) {
           await sendVerificationEmail(email, token);
         }
-        logger.info(user);
         return user;
       }
     } catch (error) {
@@ -78,7 +76,6 @@ export class AuthService {
           verificationToken: token,
         },
       });
-      logger.info("User Token:" + userToken);
 
       const data = {
         emailVerified: new Date(),
@@ -105,7 +102,6 @@ export class AuthService {
 
       for (const user of users) {
         const verified = await userRepository.update(user?.id, data);
-        logger.info(verified);
         results.push(verified);
       }
       return results;
@@ -144,7 +140,6 @@ export class AuthService {
         throw new Error("Incorrect Password");
       }
 
-      logger.info(user);
       return user;
     } catch (error) {
       logger.error(error);
@@ -178,11 +173,9 @@ export class AuthService {
           role: role as "USER" | "COMPANY",
         } satisfies Prisma.UserCreateInput;
         const user = await userRepository.create(data);
-        logger.info("New user created:" + user);
         return user;
       } else {
         // User already exists - return existing user
-        logger.info("Existing user logging in:" + userExists);
         return userExists;
       }
     } catch (error) {
