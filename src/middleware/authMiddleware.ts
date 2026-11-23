@@ -16,22 +16,31 @@ const authMiddleware = (
 ) => {
   const authHeader = req.headers.authorization;
 
-  if (!authHeader) {
-    return res.status(401).json({ message: "No token provided" });
+  if (!authHeader?.startsWith("Bearer ")) {
+    return res.status(401).json({ message: "A bearer token is required" });
   }
-  const token = authHeader?.split(" ")[1];
+  const token = authHeader.slice("Bearer ".length).trim();
+  const jwtSecret = process.env.JWT_SECRET;
+
+  if (!jwtSecret) {
+    logger.error("JWT_SECRET is not configured");
+    return res.status(500).json({ message: "Authentication is unavailable" });
+  }
 
   try {
-    const decoded = jwt.verify(token!, process.env.JWT_SECRET!) as {
+    const decoded = jwt.verify(token, jwtSecret) as {
       id: string;
       email: string;
     };
     req.user = decoded;
     next();
   } catch (error) {
-    res
-      .status(500)
-      .json({ message: "Something went wrong with authMiddleware" });
+    if (error instanceof jwt.JsonWebTokenError) {
+      return res.status(401).json({ message: "Invalid or expired token" });
+    }
+
+    logger.error({ err: error }, "Authentication middleware failed");
+    return res.status(500).json({ message: "Authentication failed" });
   }
 };
 

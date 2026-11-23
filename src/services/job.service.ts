@@ -55,19 +55,13 @@ export class JobService {
   }) {
     try {
       const jobs = await jobRepository.findAll(undefined, "job", params);
-
-      for (const job of jobs) {
-        if (job.maxApplicants === job.Resume.length) {
-          await jobRepository.update(job.id, {
-            isClosed: true,
-          } satisfies Prisma.JobUpdateInput);
-        }
-      }
-      if (jobs) {
-        return jobs as Job[];
-      }
+      return jobs.map((job) => ({
+        ...job,
+        isClosed: job.isClosed || job.maxApplicants <= job.Resume.length,
+      })) as Job[];
     } catch (error) {
-      logger.error("Error creating job" + error);
+      logger.error({ err: error }, "Failed to fetch jobs");
+      throw error;
     }
   }
 

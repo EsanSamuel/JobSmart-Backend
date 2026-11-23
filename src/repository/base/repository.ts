@@ -172,7 +172,11 @@ export class Repository<T> implements IRepository<T> {
           } satisfies Prisma.JobOrderByWithRelationInput,
           include: {
             createdBy: true,
-            Resume: true,
+            Resume: {
+              select: {
+                id: true,
+              },
+            },
           },
         } satisfies Parameters<typeof prisma.job.findMany>[0]) as Promise<T[]>;
 
